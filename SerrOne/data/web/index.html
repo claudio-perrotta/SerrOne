@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>SerrOne Web Interface</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="w3.css">
+<link rel="stylesheet" href="w3-theme-teal.css">
+<link rel="stylesheet" href="fonts.css">
+<style>
+  html,body,h1,h2,h3,h4,h5,h6,p,a {
+    font-family: "Roboto", sans-serif;
+  }
+
+  .w3-bar-block .w3-bar-item {
+    padding: 16px;
+    font-weight: bold;
+  }
+
+  /* Selezione elemento menu */
+
+  nav a {
+    border-left: 6px solid transparent !important;
+  }
+
+  nav a:target {
+    color: #fff !important;
+    background-color: #9e9e9e !important;
+    border-left: 6px solid #009688 !important;
+  }
+
+  /* The switch - the box around the slider */
+
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+  }
+
+  .switch p {
+    position: relative;
+    overflow: auto;
+    left: 70px;
+    top: -25%;
+    width: 225%;
+    height: 70%;
+  }
+
+  .databox {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #9e9e9e;
+    color: white;
+    border-radius: 34px;
+  }
+
+  .databox p {
+    position: absolute;
+    overflow: hidden;
+    height: 70%;
+    width: 90%;
+    left: 5%;
+    bottom: 5%;
+    color: white;
+    text-align: center;
+  }
+
+  /* Hide default HTML checkbox */
+
+  .switch input {
+    display: none;
+  }
+
+  /* The slider */
+
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #9e9e9e;
+    -webkit-transition: .4s;
+    transition: .4s;
+  }
+
+  .slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    -webkit-transition: .4s;
+    transition: .4s;
+  }
+
+  input:checked+.slider {
+    background-color: #009688;
+  }
+
+  input:focus+.slider {
+    box-shadow: 0 0 1px #009688;
+  }
+
+  input:checked+.slider:before {
+    -webkit-transform: translateX(26px);
+    -ms-transform: translateX(26px);
+    transform: translateX(26px);
+  }
+
+  /* Rounded sliders */
+
+  .slider.round {
+    border-radius: 34px;
+  }
+
+  .slider.round:before {
+    border-radius: 50%;
+  }
+
+  /* Animazione sidebar */
+
+  .w3-sidebar {
+    -webkit-transition: .4s ease;
+    transition: .4s ease;
+  }
+
+  @media (min-width:993px) {
+    .animate-open {
+      -webkit-transform: translateX(0px);
+      -ms-transform: translateX(0px);
+      transform: translateX(0px);
+      opacity: 1;
+    }
+  }
+
+  @media (max-width:992px) {
+    .animate-close {
+      -webkit-transform: translateX(-300px);
+      -ms-transform: translateX(-300px);
+      transform: translateX(-300px);
+      opacity: 0;
+    }
+  }
+</style>
+
+<body class="w3-light-grey">
+
+  <nav class="w3-sidebar w3-bar-block w3-collapse w3-car w3-dark-grey" style="z-index:3;width:250px;" id="mySidebar">
+
+    <a class="w3-bar-item w3-button w3-xxxlarge" style="padding:64px 32px; height:220px" href="#">
+      <img src="logo.svg" style="width:80%" alt="SerrOne">
+    </a>
+
+    <div class="w3-border-bottom"></div>
+
+    <div style="position:absolute; top:220px; bottom:117px; width:250px; overflow:auto;">
+      <a class="w3-bar-item w3-button w3-hide-large w3-large" href="javascript:void(0)" onclick="w3_close()">Close
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="4 4 16 16">
+          <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="#fff" />
+        </svg>
+      </a>
+      <a class="w3-bar-item w3-button" id="home" href="#home" onclick="menu(': home')"><i class="material-icons">home</i> Home</a>
+      <a class="w3-bar-item w3-button" id="interfaccia" href="#interfaccia" onclick="menu(': interfaccia')"><i class="material-icons">tune</i> Interfaccia remota</a>
+      <a class="w3-bar-item w3-button" id="configurazione" href="#configurazione" onclick="menu(': configurazione')"><i class="material-icons">build</i> Configurazione</a>
+      <a class="w3-bar-item w3-button" id="info" href="#info" onclick="menu(': info')"><i class="material-icons">info</i> Info</a>
+    </div>
+
+    <footer class="w3-container w3-theme" style="padding:32px; position:absolute; bottom:0px; width:250px;">
+      <p>Sviluppo in corso, 2018</p>
+    </footer>
+  </nav>
+
+  <div class="w3-overlay w3-hide-large w3-animate-opacity" onclick="w3_close()" style="cursor:pointer" id="myOverlay"></div>
+
+  <main class="w3-main" style="margin-left:250px;">
+
+    <div id="myTop" class="w3-container w3-top w3-theme w3-large">
+      <p>
+        <i class="w3-button w3-teal w3-hide-large w3-xlarge" onclick="w3_open()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="4 4 16 16">
+            <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" fill="#fff" />
+          </svg>
+        </i>
+        <span id="myIntro" class="w3-hide">SerrOne Web Interface</span>
+      </p>
+    </div>
+
+    <header class="w3-container w3-theme" style="padding:64px 32px">
+      <h1 class="w3-xxxlarge">SerrOne Web Interface</h1>
+    </header>
+
+    <section class="w3-container" style="padding:32px" id=": interfaccia">
+
+      <h2>Interfaccia remota</h2>
+
+      <p>Da qui puoi controllare alcune funzioni della board!</p>
+
+      <div class="w3-panel w3-white w3-padding-16 w3-card">
+        <div class="w3-content" style="max-width:800px">
+          <h3 class="w3-center">Comandi</h3>
+          <div class="w3-row-padding">
+            <div class="w3-col s12 m6">
+              <br>
+              <button type="button" class="w3-btn w3-padding-large w3-teal" style="width:100%" onclick="changeDeviceStatus('pin2', 'true')">Accendi luce</button>
+            </div>
+            <div class="w3-col s12 m6">
+              <br>
+              <button type="button" class="w3-btn w3-padding-large w3-teal" style="width:100%" onclick="changeDeviceStatus('pin2', 'false')">Spegni luce</button>
+            </div>
+          </div>
+          <div class="w3-row-padding">
+            <div class="w3-col s12 m6">
+              <br>
+              <button type="button" class="w3-btn w3-padding-large w3-teal" style="width:100%" onclick="requestJson('/pull.php')">Aggiorna da server</button>
+            </div>
+            <div class="w3-col s12 m6">
+              <br>
+              <button type="button" class="w3-btn w3-padding-large w3-teal" style="width:100%" onclick="requestJson('/sensors')">Aggiorna sensori</button>
+            </div>
+          </div>
+          <br>
+          <hr>
+          <h3 class="w3-center">Dispositivi</h3>
+          <div class="w3-row-padding">
+            <div class="w3-col w3-leftbar w3-border-theme w3-padding-large w3-light-grey">
+              <span id="sensors">Caricamento...</span>
+            </div>
+          </div>
+          <br>
+          <hr>
+          <h3 class="w3-center">MySQL</h3>
+          <div class="w3-row-padding">
+            <div class="w3-col w3-leftbar w3-border-theme w3-padding-large w3-light-grey">
+              <button class="w3-btn w3-teal" type="button" onclick="pushSql()">Richiesta SQL</button>
+              <code id="mysql">Avvia operazione...</code>
+            </div>
+          </div>
+
+        </div>
+        <br>
+      </div>
+
+    </section>
+
+
+    <section class="w3-container" style="padding:32px" id=": configurazione">
+
+      <h2>Configurazione</h2>
+
+      <p>Qui puoi configurare la rete WiFi alla quale connettersi.</p>
+      <div class="w3-panel w3-white w3-padding-16 w3-card">
+        <h3 class="w3-center">WiFi Station Mode</h3>
+        <form class="w3-row-padding w3-container" onsubmit="x.value='Dati inviati...'; return true;" action="/wifi" method="post" target="_blank">
+          <div class="w3-col s12 m4 l5">
+            <br>
+            <label>
+              <span>SSID</span>
+              <input class="w3-input" type="text" name="ssid" required style="width:100%">
+            </label>
+          </div>
+          <div class="w3-col s12 m4 l5">
+            <br>
+            <label>
+              <span>Password</span>
+              <input class="w3-input" type="text" name="pswd" required style="width:100%">
+            </label>
+          </div>
+          <div class="w3-col s12 m4 l2">
+            <br>
+            <label>
+              <span>Riconnetti?</span>
+              <input class="w3-btn w3-teal" type="submit" value="OK" style="width:100%">
+            </label>
+          </div>
+          <div class="w3-center w3-text-teal">
+            <output name="x"></output>
+          </div>
+        </form>
+        <br>
+      </div>
+
+    </section>
+
+
+    <section class="w3-container" style="padding:32px" id=": info">
+
+      <h2>Cos'è SerrOne Web Interface?</h2>
+
+      <p>SerrOne Web Interface è utilizzabile per controllare la board da remoto ed ha le seguenti caratteristiche:</p>
+
+      <ul class="w3-leftbar w3-theme-border" style="list-style:none">
+        <li>Utilizza la libreria per il web server.</li>
+        <li>Le risorse sono archiviate tramite la libreria SPIFFS.</li>
+        <li>[Da implementare!] Modalità di autenticazione.</li>
+      </ul>
+
+      <br>
+      <p>Qui di seguito, la configurazione dei pin del WeMos ESP8266.</p>
+      <div class="w3-panel w3-white w3-padding-16 w3-card">
+        <img src="arduino.jpg" style="width:100%" alt="Arduino">
+      </div>
+
+      <h2>Facile da usare</h2>
+
+      <div class="w3-container w3-sand w3-leftbar">
+        <p>
+          <i>Make it as simple as possible, but not simpler.</i>
+          <br> Albert Einstein</p>
+      </div>
+
+    </section>
+
+
+    <section class="w3-container" style="padding:32px" id=": home">
+      <h2>Benvenuto!</h2>
+    </section>
+
+  </main>
+
+</body>
+
+<script language="JavaScript">
+  // Change style on click
+  function menu(id) {
+    var x = document.getElementsByTagName("SECTION");
+    var i;
+    for (i = 0; i < x.length; i++) {
+      x[i].style.display = "none";
+    }
+    document.getElementById(id).style.display = "block";
+    document.getElementById("myIntro").innerHTML = "SerrOne Web Interface" + id;
+  }
+
+  // Start screen on page load
+  menu(": home");
+
+  // Open and close the sidebar on medium and small screens
+  function w3_open() {
+    document.getElementById("mySidebar").classList.remove("animate-close");
+    document.getElementById("mySidebar").classList.add("animate-open");
+    document.getElementById("mySidebar").style.display = "block";
+    document.getElementById("myOverlay").style.display = "block";
+  }
+  function w3_close() {
+    document.getElementById("mySidebar").classList.remove("animate-open");
+    document.getElementById("mySidebar").classList.add("animate-close");
+    document.getElementById("mySidebar").style.display = "block";
+    document.getElementById("myOverlay").style.display = "none";
+  }
+
+  // Change style of top container on scroll
+  window.onscroll = function () { myFunction() };
+  function myFunction() {
+    if (document.body.scrollTop > 80 || document.documentElement.scrollTop > 80) {
+      document.getElementById("myTop").classList.add("w3-card-4", "w3-animate-opacity");
+      document.getElementById("myIntro").classList.add("w3-show-inline-block");
+    } else {
+      document.getElementById("myIntro").classList.remove("w3-show-inline-block");
+      document.getElementById("myTop").classList.remove("w3-card-4", "w3-animate-opacity");
+    }
+  }
+
+  // Accordions ?????
+  function myAccordion(id) {
+    var x = document.getElementById(id);
+    if (x.className.indexOf("w3-show") == -1) {
+      x.className += " w3-show";
+      x.previousElementSibling.className += " w3-theme";
+    } else {
+      x.className = x.className.replace("w3-show", "");
+      x.previousElementSibling.className =
+        x.previousElementSibling.className.replace(" w3-theme", "");
+    }
+  }
+
+  // ESP
+  var baseURL = "";
+
+  // Push MySql, POST request to PHP page
+  function pushSql() {
+    var xhr = new XMLHttpRequest();
+    xhr.onreadystatechange = function () {
+      if (this.readyState == 4 && this.status == 200) {
+        document.getElementById("mysql").innerHTML = this.responseText;
+      }
+    };
+    xhr.open("POST", baseURL + "/push.php", true);
+    xhr.send();
+  }
+
+  // GET request JSON
+  function requestJson(file) {
+    var xhr, myObj, txt = "";
+    xhr = new XMLHttpRequest();
+    xhr.onreadystatechange = function () {
+      if (this.readyState == 4 && this.status == 200) {
+        myObj = JSON.parse(this.responseText);
+        // Create table
+        txt += "<table class='w3-table'><br>";
+        for (x in myObj) {
+          txt += "<tr class='w3-row'>";
+          for (y in myObj[x]) {
+            if (y.startsWith("T", 0)) {
+              txt += "<div class='w3-col s12 m6 l4'>";
+              txt += "  <label class='switch'>";
+              txt += "    <p>" + myObj[x][y] + "</p>";
+              txt += "    <span class='databox round'><p>" + y + "</p></span>";
+              txt += "  </label>";
+              txt += "</div>";
+            } else if (y.startsWith("pin", 0)) {
+              txt += "<div class='w3-col s12 m6 l4'>";
+              txt += "  <label class='switch'>";
+              txt += "    <p>" + x + "</p>";
+              txt += "    <input type='checkbox' name='" + y + "' onchange='changeDeviceStatus(this.name, this.checked)' " + (myObj[x][y] ? "checked" : "") + ">";
+              txt += "    <span class='slider round'></span>";
+              txt += "  </label>";
+              txt += "</div>";
+            } else {
+              txt += "<div class='w3-col s12 m6 l4'>";
+              txt += "  <label class='switch'>";
+              txt += "    <p>" + x + "</p>";
+              txt += "    <span class='databox round'><p>" + myObj[x][y] + " " + y + "</p></span>";
+              txt += "  </label>";
+              txt += "</div>";
+            }
+          }
+          txt += "</tr>";
+        }
+        txt += "</table>";
+        // Insert text
+        document.getElementById("sensors").innerHTML = txt;
+      }
+    };
+    xhr.open("GET", baseURL + file, true);
+    xhr.send();
+  }
+
+  // GET update sensors on page load
+  requestJson("/sensors");
+
+  // POST change device state
+  function changeDeviceStatus(device, state) {  
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", baseURL + "/device.php", true);
+    xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+    xhr.onload = function () {
+      console.log(this.responseText);
+      //document.getElementById(device).checked = state; // aggiorna lo stato dell'interruttore
+      requestJson("/sensors"); // aggiorna lo stato dei dispositivi
+      };
+    xhr.send("label=" + device + "&ison=" + state);
+  }
+</script>
+
+</html>

@@ -1,5 +1,5 @@
 <?php
-// start
+// (pull from client) start pop - "popped off" database
 //echo "<div>Connessione...</div>\r\n";
 
 // client ip address

@@ -1,4 +1,5 @@
 /* SerrOne ESP8266 */
+#pragma once
 
 /* EEPROM */
 #include <EEPROM.h>
@@ -7,13 +8,14 @@ int addr = 0;
 /* WiFi */
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h> // E` necessario? Migliora la stabilita` della connessione?
+
 /* Configurazione Wi-Fi */
 char*       WFAP_SSID = "SerrOne_AP";
 char*       WFAP_PASS = "12345678";
 String      WIFI_SSID = "";
 String      WIFI_PASS = "";
 WiFiMode_t  WIFI_MODE = WIFI_AP;  // Imposta: WIFI_AP | WIFI_STA | WIFI_AP_STA | WIFI_OFF
-const char* deviceUrl = "webserver.local";
+const char* LOCAL_URL = "serrone.local";
 //IPAddress local_IP(192, 168, 4, 22);
 //IPAddress gateway(192, 168, 4, 9);
 //IPAddress subnet(255, 255, 255, 0);
@@ -84,7 +86,7 @@ String structToJson(S_Dispositivi *s) {
 void jsonToFile(String s) {
   bool file_exists = SPIFFS.exists("/data.json");
   File f = SPIFFS.open("/data.json", "a");
-#ifdef ENABLE_LCD_DEBUG
+#ifdef ENABLE_DEBUG
   Serial.printf("Apertura file in scrittura %s\n", f ? "riuscita!" : "fallita!");
 #endif
   if (!f)
@@ -97,7 +99,7 @@ void jsonToFile(String s) {
 
 String recombinePartialJson(char *path) {
   File f = SPIFFS.open(path, "r");
-#ifdef ENABLE_LCD_DEBUG
+#ifdef ENABLE_DEBUG
   Serial.printf("Apertura file in lettura %s\n", f ? "riuscita!" : "fallita!");
 #endif
   if (!f)
@@ -157,7 +159,7 @@ void wifiSetup() {
 
   /* Imposta la modalita` WiFi del modulo ESP */
   WiFi.mode(WIFI_MODE);
-  WiFi.hostname(deviceUrl);      // DHCP Hostname (useful for finding device for static lease)
+  WiFi.hostname(LOCAL_URL);      // DHCP Hostname (useful for finding device for static lease)
 
   /* Connetti */
   if ( (WIFI_MODE == WIFI_AP_STA) || (WIFI_MODE == WIFI_AP) ) {
@@ -181,11 +183,11 @@ void wifiSetup() {
   /* Connesso! */
   printScreen("Config. WiFi", "terminata!");
 
-#ifdef ENABLE_LCD_DEBUG
+#ifdef ENABLE_DEBUG
   Serial.write(12);   // FormFeed
   Serial.println();
   WiFi.printDiag(Serial);
-#endif //ENABLE_LCD_DEBUG
+#endif //ENABLE_DEBUG
 }
 
 void dnsServerSetup() {
@@ -199,7 +201,7 @@ void dnsServerSetup() {
   dnsServer.setErrorReplyCode(DNSReplyCode::ServerFailure);
 
   // start DNS server for a specific domain name
-  dnsServer.start(DNS_PORT, deviceUrl, ap_IP);
+  dnsServer.start(DNS_PORT, LOCAL_URL, ap_IP);
 }
 
 void webServerSetup() {
@@ -213,15 +215,16 @@ void webServerSetup() {
   });
 
   // handleRoot
-  webServer.serveStatic("/", SPIFFS, "/web/index.html");
-  webServer.serveStatic("/w3.css", SPIFFS, "/web/w3.css");
-  webServer.serveStatic("/w3-theme-teal.css", SPIFFS, "/web/w3-theme-teal.css");
-  webServer.serveStatic("/fonts.css", SPIFFS, "/web/fonts.css");
-  webServer.serveStatic("/logo.svg", SPIFFS, "/web/logo.svg");
-  webServer.serveStatic("/arduino.jpg", SPIFFS, "/web/arduino.jpg");
-  webServer.serveStatic("/latin-ext.woff2", SPIFFS, "/web/latin-ext.woff2");
-  webServer.serveStatic("/latin.woff2", SPIFFS, "/web/latin.woff2");
-  webServer.serveStatic("/MaterialIcons-Regular.woff2", SPIFFS, "/web/MaterialIcons-Regular.woff2");
+  webServer.serveStatic("/", SPIFFS, "/web/");//.setDefaultFile("index.html"); // Server with different default file
+  //webServer.serveStatic("/", SPIFFS, "/web/index.html");
+  //webServer.serveStatic("/w3.css", SPIFFS, "/web/w3.css");
+  //webServer.serveStatic("/w3-theme-teal.css", SPIFFS, "/web/w3-theme-teal.css");
+  //webServer.serveStatic("/fonts.css", SPIFFS, "/web/fonts.css");
+  //webServer.serveStatic("/logo.svg", SPIFFS, "/web/logo.svg");
+  //webServer.serveStatic("/arduino.jpg", SPIFFS, "/web/arduino.jpg");
+  //webServer.serveStatic("/latin-ext.woff2", SPIFFS, "/web/latin-ext.woff2");
+  //webServer.serveStatic("/latin.woff2", SPIFFS, "/web/latin.woff2");
+  //webServer.serveStatic("/MaterialIcons-Regular.woff2", SPIFFS, "/web/MaterialIcons-Regular.woff2");
 
   webServer.on("/push.php", []() {
     webServer.send(200, "text/html", clientConnect());

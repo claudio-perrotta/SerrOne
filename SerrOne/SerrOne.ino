@@ -10,12 +10,18 @@
    This code is in the public domain.
 */
 
+#include "SerrOne_Version.h"
+
+/* Configurazione debug */
+#define ENABLE_DEBUG      true    // true = attiva debug | false = disattiva debug
+#define SERIAL_BAUDRATE   115200  // Velocita` porta seriale
+
 /* Configurazione PIN sensori ed attuatori */
-#define DHTPIN      15            // Il pin digitale al quale e` connesso il DHT
-#define DHTTYPE     DHT11         // Tipo di sensore DHT
-#define SMPIN       A0            // PIN sensore umidita` suolo (Soil Moisture Sensor's PIN)
-#define LIGHT       LED_BUILTIN   // PIN della luce
-#define FAN         0             // PIN della ventola
+#define DHT_PIN     15            // Il pin digitale al quale e` connesso il DHT
+#define DHT_TYPE    DHT11         // Tipo di sensore DHT
+#define SM_PIN      A0            // PIN sensore umidita` suolo (Soil Moisture Sensor's PIN)
+#define LIGHT_PIN   LED_BUILTIN   // PIN della luce
+#define FAN_PIN     0             // PIN della ventola
 #define WATER_VALVE 0             // PIN della valvola acqua
 
 /* Configurazione PIN tasti */
@@ -24,10 +30,6 @@
 #define BUTTON_C    14            // ?
 #define BUTTON_D    16            // ?
 
-/* Configurazione debug */
-#define ENABLE_LCD_DEBUG  1       // 1 = attiva debug | 0 = disattiva debug
-#define SERIAL_BAUDRATE   115200  // Velocita` porta seriale
-
 /* Include la libreria Wire per il bus I2C */
 #include <Wire.h>                 // Libreria Wire per il bus I2C
 //#define SCL_PIN     D1            // Il pin digitale della linea SCL (Shared clock signal)
@@ -35,7 +37,7 @@
 
 /* Inclusione libreria sensore */
 #include <DHT.h>                  // Adafruit's library, per gestire il sensore DHT
-DHT dht(DHTPIN, DHTTYPE);         // Inizializza dht
+DHT dht(DHT_PIN, DHT_TYPE);       // Inizializza dht
 
 /* Inclusione libreria orario */
 #include <time.h>
@@ -71,8 +73,8 @@ struct S_Dispositivi {
   S_Sensore     luce = {"Luminosita`", 0, "cd"};    // Ambient light sensing
   /* Definisce ed inizializza gli attuatori */
   S_Attuatore   led_int = {"LED integrato", LED_BUILTIN, LOW};
-  S_Attuatore   lampada = {"Lampada", LIGHT, LOW};
-  S_Attuatore   ventola = {"Ventola", FAN, LOW};
+  S_Attuatore   lampada = {"Lampada", LIGHT_PIN, LOW};
+  S_Attuatore   ventola = {"Ventola", FAN_PIN, LOW};
   S_Attuatore   v_acqua = {"Valvola acqua", WATER_VALVE, LOW};
 } dispositivo;
 
@@ -84,7 +86,7 @@ bool aggiornaSensori() {
     dispositivo.adesso = time(nullptr);
     dispositivo.temp.valore = dht.readTemperature();
     dispositivo.umid.valore = dht.readHumidity();
-    dispositivo.terr.valore = constrain(map(analogRead(SMPIN), 0, 1023, 0, 100), 0, 100);
+    dispositivo.terr.valore = constrain(map(analogRead(SM_PIN), 0, 1023, 0, 100), 0, 100);
     /* IMPORTANT to save the start time of the current sensors state */
     tempo_iniziale = tempo_corrente;
     //jsonToFile(structToJson(&dispositivo));
@@ -99,18 +101,18 @@ bool aziona(S_Attuatore &a, bool condizione = true) {
     if (a.stato != HIGH) {
       digitalWrite(a.pin, HIGH);
       a.stato = HIGH;
-#ifdef ENABLE_LCD_DEBUG
+#ifdef ENABLE_DEBUG
       Serial.printf("[AZIONA] Dispositivo sul pin #%d (%s) stato: %s\n", a.pin, a.nome, a.stato ? "ON!" : "OFF");
-#endif //ENABLE_LCD_DEBUG
+#endif //ENABLE_DEBUG
       return true;
     }
   } else {
     if (a.stato != LOW) {
       digitalWrite(a.pin, LOW);
       a.stato = LOW;
-#ifdef ENABLE_LCD_DEBUG
+#ifdef ENABLE_DEBUG
       Serial.printf("[AZIONA] Dispositivo sul pin #%d (%s) stato: %s\n", a.pin, a.nome, a.stato ? "ON!" : "OFF");
-#endif //ENABLE_LCD_DEBUG
+#endif //ENABLE_DEBUG
       return true;
     }
   }
@@ -140,6 +142,13 @@ void polling(void) {
   dnsServer.processNextRequest();
   webServer.handleClient();
   delay(0); // Per la compatibilita` con i servizi in background dell'ESP
+#ifdef ENABLE_DEBUG
+  static unsigned long last = millis();
+  if (millis() - last > 5000) {
+    last = millis();
+    Serial.printf("[POLLING] Free heap: %d bytes\n", ESP.getFreeHeap());
+  }
+#endif //ENABLE_DEBUG
 #endif //ESP8266
 }
 
@@ -260,10 +269,11 @@ SMenu menu_principale[] = {
 };
 
 void setup() {
-#ifdef ENABLE_LCD_DEBUG
+#ifdef ENABLE_DEBUG
   /* Inizializza Serial Monitor */
   Serial.begin(SERIAL_BAUDRATE);
-#endif //ENABLE_LCD_DEBUG
+  Serial.printf("\n[DEBUG] SerrOne - ver. %s\n[DEBUG] Compilation began %s at %s with C++%d\n", Version::toString(), __DATE__, __TIME__, __cplusplus);
+#endif //ENABLE_DEBUG
   /* Initial start time */
   tempo_iniziale = millis();
   /* Inizializza il pin digitale LED_BUILTIN come un output ed accendi il LED */

@@ -1,4 +1,5 @@
 /* SerrOne Screen */
+#pragma once
 
 //#define USE_LCD 0   // 1 = usa LCD | 0 = usa OLED
 #ifdef USE_LCD
@@ -50,13 +51,13 @@ void printScreen(const char *line0, const char *line1, bool need_clear = true) {
   ssd1306_printFixed (0,  0, line0, STYLE_BOLD);
   ssd1306_printFixed (0, 16, line1, STYLE_NORMAL);
 #endif //USE_LCD
-#ifdef ENABLE_LCD_DEBUG
+#ifdef ENABLE_DEBUG
   if (need_clear)
     Serial.write(12);   // FormFeed
   Serial.println();
   Serial.println(line0);
   Serial.println(line1);
-#endif //ENABLE_LCD_DEBUG
+#endif //ENABLE_DEBUG
 }
 
 /* Splash screen e avanzamento barra in 2 secondi */
@@ -78,7 +79,7 @@ void splashScreen() {
 }
 
 /* Controlla quale lettera viene immessa da terminale */
-#ifdef ENABLE_LCD_DEBUG
+#ifdef ENABLE_DEBUG
 bool serialEvent(char c = '\n') {
   // Associa il tasto
   if (c == BUTTON_A) c = 'a';
@@ -91,13 +92,13 @@ bool serialEvent(char c = '\n') {
   }
   return false;
 }
-#endif //ENABLE_LCD_DEBUG
+#endif //ENABLE_DEBUG
 
 /* Controlla la pressione di un tasto */
 bool pressioneTasto(int pin) {
-#ifdef ENABLE_LCD_DEBUG
+#ifdef ENABLE_DEBUG
   return serialEvent(pin); // Aggira il controllo dei tasti fisici [ButtonOverride]
-#endif //ENABLE_LCD_DEBUG
+#endif //ENABLE_DEBUG
   pinMode(pin, INPUT);
   bool stato = digitalRead(pin); // Controlla se il tasto e` stato premuto [Trigger]
   if (stato == LOW)

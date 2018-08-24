@@ -1,5 +1,5 @@
 <?php
-// start
+// start push - "pushed onto" database
 echo "<div>Connessione...</div>\r\n";
 
 // client ip address

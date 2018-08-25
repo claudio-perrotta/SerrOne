@@ -60,6 +60,23 @@ void printScreen(const char *line0, const char *line1, bool need_clear = true) {
 #endif //ENABLE_DEBUG
 }
 
+/* Inizializza schermo */
+void screenSetup() {
+  //Wire.begin(SDA_PIN, SCL_PIN);
+#ifdef USE_LCD
+  lcd.begin(LCD_W, LCD_H);
+  lcd.cursor();
+  lcd.blink();
+#else
+  pinMode(RST_OLED, OUTPUT);
+  digitalWrite(RST_OLED, LOW); // turn D2 low to reset OLED
+  delay(50);
+  digitalWrite(RST_OLED, HIGH); // while OLED is running, must set D2 in high
+  ssd1306_128x32_i2c_init();
+  ssd1306_setFixedFont(ssd1306xled_font8x16);
+#endif //USE_LCD
+}
+
 /* Splash screen e avanzamento barra in 2 secondi */
 void splashScreen() {
   printScreen("    SerrOne!    ", "................");
@@ -136,7 +153,7 @@ uint8_t menu_item_id = 0;         // Inizializza variabile menu corrente
 /* Funzione per eseguire il menu */
 void runMenu(SMenu *menu) {
   size_t size_voice = sizeof(menu->element);
-  size_t size_vList = sizeof(menu->element) * 6;
+  size_t size_vList = sizeof(menu->element) * 7; // Fake calcolous! ;)
   const uint8_t menu_items = (size_vList / size_voice) - 1; // Calcolo del numero di voci del menu dalla lista, meno uno
   THandlerFunction _callback(NULL); // Handler per il callback
   uint8_t prev_menu_item_id = 0; // Dichiara ed inizializza la variabile

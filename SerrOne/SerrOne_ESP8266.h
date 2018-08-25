@@ -115,7 +115,7 @@ String recombinePartialJson(char *path) {
 }
 //EndSaveJson
 
-String clientConnect() {
+String httpConnect() {
   String payload;
   if ((WiFi.status() == WL_CONNECTED)) {
     /* allow reuse (if server supports it) */
@@ -150,6 +150,9 @@ String clientConnect() {
     payload = "WiFi Station... non connessa!";
   }
   return payload;
+}
+void push() {
+  httpConnect();
 }
 
 void wifiSetup() {
@@ -215,24 +218,24 @@ void webServerSetup() {
   });
 
   // handleRoot
-  webServer.serveStatic("/", SPIFFS, "/web/");//.setDefaultFile("index.html"); // Server with different default file
-  //webServer.serveStatic("/", SPIFFS, "/web/index.html");
-  //webServer.serveStatic("/w3.css", SPIFFS, "/web/w3.css");
-  //webServer.serveStatic("/w3-theme-teal.css", SPIFFS, "/web/w3-theme-teal.css");
-  //webServer.serveStatic("/fonts.css", SPIFFS, "/web/fonts.css");
-  //webServer.serveStatic("/logo.svg", SPIFFS, "/web/logo.svg");
-  //webServer.serveStatic("/arduino.jpg", SPIFFS, "/web/arduino.jpg");
-  //webServer.serveStatic("/latin-ext.woff2", SPIFFS, "/web/latin-ext.woff2");
-  //webServer.serveStatic("/latin.woff2", SPIFFS, "/web/latin.woff2");
-  //webServer.serveStatic("/MaterialIcons-Regular.woff2", SPIFFS, "/web/MaterialIcons-Regular.woff2");
+  //webServer.serveStatic("/", SPIFFS, "/web/").setDefaultFile("index.html"); // Server with different default file
+  webServer.serveStatic("/", SPIFFS, "/web/index.html");
+  webServer.serveStatic("/w3.css", SPIFFS, "/web/w3.css");
+  webServer.serveStatic("/w3-theme-teal.css", SPIFFS, "/web/w3-theme-teal.css");
+  webServer.serveStatic("/fonts.css", SPIFFS, "/web/fonts.css");
+  webServer.serveStatic("/logo.svg", SPIFFS, "/web/logo.svg");
+  webServer.serveStatic("/arduino.jpg", SPIFFS, "/web/arduino.jpg");
+  webServer.serveStatic("/latin-ext.woff2", SPIFFS, "/web/latin-ext.woff2");
+  webServer.serveStatic("/latin.woff2", SPIFFS, "/web/latin.woff2");
+  webServer.serveStatic("/MaterialIcons-Regular.woff2", SPIFFS, "/web/MaterialIcons-Regular.woff2");
 
   webServer.on("/push.php", []() {
-    webServer.send(200, "text/html", clientConnect());
+    webServer.send(200, "text/html", httpConnect());
   });
 
   webServer.on("/device.php", []() {
-    if (webServer.hasArg("label") && webServer.hasArg("ison")) {
-      //uint8_t devId = indexOf(webServer.arg("label"));
+    if (webServer.hasArg("device") && webServer.hasArg("ison")) {
+      //uint8_t devId = indexOf(webServer.arg("device"));
       bool stato = (webServer.arg("ison") == "true") ? true : false;
       webServer.send(200, "text/plain", aziona(dispositivo.led_int, stato) ? "Stato aggiornato" : "Gia` aggiornato");
     } else {

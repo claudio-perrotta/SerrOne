@@ -447,16 +447,16 @@
   requestJson("/sensors");
 
   // POST change device state
-  function changeDeviceStatus(device, state) {  
+  function changeDeviceStatus(devId, state) {  
     var xhr = new XMLHttpRequest();
     xhr.open("POST", baseURL + "/device.php", true);
     xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
     xhr.onload = function () {
       console.log(this.responseText);
-      //document.getElementById(device).checked = state; // aggiorna lo stato dell'interruttore
+      //document.getElementById(devId).checked = state; // aggiorna lo stato dell'interruttore
       requestJson("/sensors"); // aggiorna lo stato dei dispositivi
       };
-    xhr.send("label=" + device + "&ison=" + state);
+    xhr.send("device=" + devId + "&ison=" + state);
   }
 </script>
 

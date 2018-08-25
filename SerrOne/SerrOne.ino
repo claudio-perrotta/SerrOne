@@ -141,7 +141,7 @@ void polling(void) {
 #ifdef ESP8266
   dnsServer.processNextRequest();
   webServer.handleClient();
-  delay(0); // Per la compatibilita` con i servizi in background dell'ESP
+  yield(); // Per la compatibilita` con i servizi in background dell'ESP
 #ifdef ENABLE_DEBUG
   static unsigned long last = millis();
   if (millis() - last > 5000) {
@@ -237,7 +237,7 @@ void ScreenSaver() {
 SMenuVoice menu_home[] = {
   /* Voci del menu */
   { "Premi il pul. A ", []() {
-      printScreen("Hai premuto il  ", "pulsante B!"); delay(2000);
+      printScreen("", "Premuto pul. B! ", false); delay(2000);
     }
   },
   { "1. LED On/Off  ", []() {
@@ -259,6 +259,10 @@ SMenuVoice menu_home[] = {
   { "5. Screen Saver ", []() {
       ScreenSaver();
     }
+  },
+  { "6. Riavvia      ", []() {
+      ESP.restart();
+    }
   }
 };
 
@@ -279,19 +283,7 @@ void setup() {
   /* Inizializza il pin digitale LED_BUILTIN come un output ed accendi il LED */
   aziona(dispositivo.led_int, true); // Passa da LOW a HIGH
   /* Inizializza schermo */
-  //Wire.begin(SDA_PIN, SCL_PIN);
-#ifdef USE_LCD
-  lcd.begin(LCD_W, LCD_H);
-  lcd.cursor();
-  lcd.blink();
-#else
-  pinMode(RST_OLED, OUTPUT);
-  digitalWrite(RST_OLED, LOW); // turn D2 low to reset OLED
-  delay(50);
-  digitalWrite(RST_OLED, HIGH); // while OLED is running, must set D2 in high
-  ssd1306_128x32_i2c_init();
-  ssd1306_setFixedFont(ssd1306xled_font8x16);
-#endif //USE_LCD
+  screenSetup();
   /* Splash screen */
   splashScreen();
 #ifdef ESP8266
@@ -312,10 +304,8 @@ void setup() {
   dnsServerSetup();
   /* Configura il WebServer */
   webServerSetup();
-  /* Run every 60s */
-  //tickerPush.attach(60, []() {
-  //  clientConnect();
-  //});
+  /* Scheduler per l'invio dei dati al server */
+  tickerPush.attach(60, push);
 #endif //ESP8266
   /* Pulisci LCD e spegni il LED */
 #ifdef USE_LCD

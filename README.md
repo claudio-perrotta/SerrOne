@@ -1,11 +1,13 @@
-# SerrOne
+# ![SerrOne](https://raw.githubusercontent.com/claudio-perrotta/SerrOne/master/SerrOne/data/logo.bmp)
 Arduino's project about an automated greenhouse; adaptable for AVR Boards, ESP8266 based chips.
 
 ## How It Works
-- when your ESP starts up, it sets it up in Station mode and tries to connect to a previously saved Access Point
+- when your ESP starts up and pre-configured, it sets it up in `WIFI_AP_STA` mode and tries to connect to a previously saved Access Point
+- in both cases, it serve a configuration portal on `serrone.local`
 
 ## Wishlist
-- [x] move HTML to SPIFFS
+- [x] use a Web and DNS server for configuration
+- [x] move HTML, CSS, Javascript and other stuff to SPIFFS
 - [ ] add ability to configure more parameters than ssid/password
 - [ ] ESP32 support or instructions
 

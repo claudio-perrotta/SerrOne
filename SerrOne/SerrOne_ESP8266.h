@@ -70,14 +70,14 @@ String structToJson(S_Dispositivi *s) {
 
   String json = String('{') + NL;
   json += IS + String("Data e ora") + CS + "{\"" + String("T") + CS + '"' + String(adesso_str) + '"' + '}' + LS;
-  json += IS + String(s->temp.nome) + CS + "{\"" + String(s->temp.simbolo) + CS + String(s->temp.valore) + '}' + LS;
-  json += IS + String(s->umid.nome) + CS + "{\"" + String(s->umid.simbolo) + CS + String(s->umid.valore) + '}' + LS;
-  json += IS + String(s->terr.nome) + CS + "{\"" + String(s->terr.simbolo) + CS + String(s->terr.valore) + '}' + LS;
-  json += IS + String(s->luce.nome) + CS + "{\"" + String(s->luce.simbolo) + CS + String(s->luce.valore) + '}' + LS;
-  json += IS + String(s->led_int.nome) + CS + "{\"pin" + String(s->led_int.pin) + CS + String(s->led_int.stato ? TRUE : FALSE) + '}' + LS;
-  json += IS + String(s->lampada.nome) + CS + "{\"pin" + String(s->lampada.pin) + CS + String(s->lampada.stato ? TRUE : FALSE) + '}' + LS;
-  json += IS + String(s->ventola.nome) + CS + "{\"pin" + String(s->ventola.pin) + CS + String(s->ventola.stato ? TRUE : FALSE) + '}' + LS;
-  json += IS + String(s->v_acqua.nome) + CS + "{\"pin" + String(s->v_acqua.pin) + CS + String(s->v_acqua.stato ? TRUE : FALSE) + '}' + NL;
+  json += IS + String(s->sensore[tempIdx].nome) + CS + "{\"" + String(s->sensore[tempIdx].simbolo) + CS + String(s->sensore[tempIdx].valore) + '}' + LS;
+  json += IS + String(s->sensore[umidIdx].nome) + CS + "{\"" + String(s->sensore[umidIdx].simbolo) + CS + String(s->sensore[umidIdx].valore) + '}' + LS;
+  json += IS + String(s->sensore[terrIdx].nome) + CS + "{\"" + String(s->sensore[terrIdx].simbolo) + CS + String(s->sensore[terrIdx].valore) + '}' + LS;
+  json += IS + String(s->sensore[luceIdx].nome) + CS + "{\"" + String(s->sensore[luceIdx].simbolo) + CS + String(s->sensore[luceIdx].valore) + '}' + LS;
+  json += IS + String(s->attuatore[led_int].nome) + CS + "{\"pin" + String(s->attuatore[led_int].pin) + CS + String(s->attuatore[led_int].stato ? TRUE : FALSE) + '}' + LS;
+  json += IS + String(s->attuatore[lampada].nome) + CS + "{\"pin" + String(s->attuatore[lampada].pin) + CS + String(s->attuatore[lampada].stato ? TRUE : FALSE) + '}' + LS;
+  json += IS + String(s->attuatore[ventola].nome) + CS + "{\"pin" + String(s->attuatore[ventola].pin) + CS + String(s->attuatore[ventola].stato ? TRUE : FALSE) + '}' + LS;
+  json += IS + String(s->attuatore[v_acqua].nome) + CS + "{\"pin" + String(s->attuatore[v_acqua].pin) + CS + String(s->attuatore[v_acqua].stato ? TRUE : FALSE) + '}' + NL;
   json += '}';
 
   return json;
@@ -237,7 +237,7 @@ void webServerSetup() {
     if (webServer.hasArg("device") && webServer.hasArg("ison")) {
       //uint8_t devId = indexOf(webServer.arg("device"));
       bool stato = (webServer.arg("ison") == "true") ? true : false;
-      webServer.send(200, "text/plain", aziona(dispositivo.led_int, stato) ? "Stato aggiornato" : "Gia` aggiornato");
+      webServer.send(200, "text/plain", aziona(dispositivo.attuatore[led_int], stato) ? "Stato aggiornato" : "Gia` aggiornato");
     } else {
       webServer.send(500, "text/plain", "Comando non valido!");
     }

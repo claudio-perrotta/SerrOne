@@ -65,28 +65,35 @@ struct S_Sensore {
 
 /* Struttura dati per i dispositivi */
 struct S_Dispositivi {
-  time_t        adesso;                             // Data ed ora (tempo)
+  time_t adesso;                  // Data ed ora (tempo)
   /* Definisce ed inizializza i sensori */
-  S_Sensore     temp = {"Temperatura", 0, "C"};     // Temperature sensing
-  S_Sensore     umid = {"Umidita`", 0, "%"};        // Humidity sensing
-  S_Sensore     terr = {"Umidita` terra", 0, "%"};  // Soil moisture sensing
-  S_Sensore     luce = {"Luminosita`", 0, "cd"};    // Ambient light sensing
+  S_Sensore sensore[4] = {
+    {"Temperatura", 0, "C"},      // Temperature sensing
+    {"Umidita`", 0, "%"},         // Humidity sensing
+    {"Umidita` terra", 0, "%"},   // Soil moisture sensing
+    {"Luminosita`", 0, "cd"}      // Ambient light sensing
+  };
   /* Definisce ed inizializza gli attuatori */
-  S_Attuatore   led_int = {"LED integrato", LED_BUILTIN, LOW};
-  S_Attuatore   lampada = {"Lampada", LIGHT_PIN, LOW};
-  S_Attuatore   ventola = {"Ventola", FAN_PIN, LOW};
-  S_Attuatore   v_acqua = {"Valvola acqua", WATER_VALVE, LOW};
+  S_Attuatore attuatore[4] = {
+    {"LED integrato", LED_BUILTIN, LOW},
+    {"Lampada", LIGHT_PIN, LOW},
+    {"Ventola", FAN_PIN, LOW},
+    {"Valvola acqua", WATER_VALVE, LOW}
+  };
 } dispositivo;
+
+uint8_t tempIdx = 0, umidIdx = 1, terrIdx = 2, luceIdx = 3;
+uint8_t led_int = 0, lampada = 1, ventola = 2, v_acqua = 3;
 
 bool aggiornaSensori() {
   /* Ottieni il "tempo" corrente (attualmente il numero di millisecondi dall'avvio del programma) */
   tempo_corrente = millis();
-  /* Test whether the period has elapsed */
+  /* Controlla quando il periodo e` superato - Test whether the period has elapsed */
   if (tempo_corrente - tempo_iniziale >= periodo) {
     dispositivo.adesso = time(nullptr);
-    dispositivo.temp.valore = dht.readTemperature();
-    dispositivo.umid.valore = dht.readHumidity();
-    dispositivo.terr.valore = constrain(map(analogRead(SM_PIN), 0, 1023, 0, 100), 0, 100);
+    dispositivo.sensore[tempIdx].valore = dht.readTemperature();
+    dispositivo.sensore[umidIdx].valore = dht.readHumidity();
+    dispositivo.sensore[terrIdx].valore = constrain(map(analogRead(SM_PIN), 0, 1023, 0, 100), 0, 100);
     /* IMPORTANT to save the start time of the current sensors state */
     tempo_iniziale = tempo_corrente;
     //jsonToFile(structToJson(&dispositivo));
@@ -121,9 +128,9 @@ bool aziona(S_Attuatore &a, bool condizione = true) {
 
 /* Metodo per controllare gli attuatori */
 void controllaAutomatizzazione() {
-  aziona(dispositivo.lampada, dispositivo.umid.valore < 55);
-  aziona(dispositivo.ventola, (dispositivo.temp.valore > 30) || (dispositivo.umid.valore > 85) );
-  aziona(dispositivo.v_acqua, dispositivo.terr.valore < 40);
+  aziona(dispositivo.attuatore[lampada],  dispositivo.sensore[umidIdx].valore < 55);
+  aziona(dispositivo.attuatore[ventola], (dispositivo.sensore[tempIdx].valore > 30) || (dispositivo.sensore[umidIdx].valore > 85) );
+  aziona(dispositivo.attuatore[v_acqua],  dispositivo.sensore[terrIdx].valore < 40);
 }
 
 /* Inclusione librerie per il menu e lo schermo */
@@ -162,18 +169,18 @@ void BalternaStatoPIN(int pin, bool& stato) {
 
 /* Funzionalita` 1 */
 void attuatoreLuce() {
-  String ln_1 = String(dispositivo.led_int.nome);
-  String ln_2 = String(dispositivo.led_int.stato ? "Dispositivo ON!" : "Dispositivo OFF");
+  String ln_1 = String(dispositivo.attuatore[led_int].nome);
+  String ln_2 = String(dispositivo.attuatore[led_int].stato ? "Dispositivo ON!" : "Dispositivo OFF");
   printScreen(ln_1.c_str(), ln_2.c_str());
-  bool stato_precedente = dispositivo.led_int.stato;
+  bool stato_precedente = dispositivo.attuatore[led_int].stato;
   while (true != pressioneTasto(BUTTON_A)) {
     if (true == pressioneTasto(BUTTON_B))
-      aziona(dispositivo.led_int, !dispositivo.led_int.stato);
-    if (stato_precedente != dispositivo.led_int.stato) {
-      String ln_1 = String(dispositivo.led_int.nome);
-      String ln_2 = String(dispositivo.led_int.stato ? "Dispositivo ON!" : "Dispositivo OFF");
+      aziona(dispositivo.attuatore[led_int], !dispositivo.attuatore[led_int].stato);
+    if (stato_precedente != dispositivo.attuatore[led_int].stato) {
+      String ln_1 = String(dispositivo.attuatore[led_int].nome);
+      String ln_2 = String(dispositivo.attuatore[led_int].stato ? "Dispositivo ON!" : "Dispositivo OFF");
       printScreen(ln_1.c_str(), ln_2.c_str());
-      stato_precedente = dispositivo.led_int.stato;
+      stato_precedente = dispositivo.attuatore[led_int].stato;
     }
     polling();
   }
@@ -184,8 +191,8 @@ void sensoreDHT() {
   printScreen("", msg_attendere, false);
   do {
     if (aggiornaSensori() == true) {
-      String str_t = String("Temperatura  ") + dispositivo.temp.valore + String("C");
-      String str_h = String("Umidita`     ") + dispositivo.umid.valore + String("%");
+      String str_t = String("Temperatura  ") + dispositivo.sensore[tempIdx].valore + String("C");
+      String str_h = String("Umidita`     ") + dispositivo.sensore[umidIdx].valore + String("%");
       printScreen(str_t.c_str(), str_h.c_str());
     }
     polling();
@@ -197,7 +204,7 @@ void sensoreTerreno() {
   printScreen("", msg_attendere, false);
   do {
     if (aggiornaSensori() == true) {
-      String str_ht = String("Umid. terra  ") + dispositivo.terr.valore + String("%");
+      String str_ht = String("Umid. terra  ") + dispositivo.sensore[terrIdx].valore + String("%");
       printScreen("SENSORE TERRENO ", str_ht.c_str());
     }
     polling();
@@ -281,7 +288,7 @@ void setup() {
   /* Initial start time */
   tempo_iniziale = millis();
   /* Inizializza il pin digitale LED_BUILTIN come un output ed accendi il LED */
-  aziona(dispositivo.led_int, true); // Passa da LOW a HIGH
+  aziona(dispositivo.attuatore[led_int], true); // Passa da LOW a HIGH
   /* Inizializza schermo */
   screenSetup();
   /* Splash screen */
@@ -313,7 +320,7 @@ void setup() {
   lcd.noCursor();
   lcd.noBlink();
 #endif //USE_LCD
-  aziona(dispositivo.led_int, false); // Passa da HIGH a LOW
+  aziona(dispositivo.attuatore[led_int], false); // Passa da HIGH a LOW
 }
 
 void loop() {

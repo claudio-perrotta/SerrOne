@@ -20,8 +20,12 @@ Debug is enabled by default on Serial. To disable, comment this line:
 ```
 
 ## Releases
+#### 0.10
++ added sub menu and upgrade esisting menu's function
+- bug fixes and memory improvements
+
 #### 0.9
 * initial release
-- bug fixes and speed improvements
 + some html, css and js changes
 + added on demand config portal
+- bug fixes and speed improvements

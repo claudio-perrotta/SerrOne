@@ -136,53 +136,65 @@ typedef void (*THandlerFunction)(void); // = NULL; direttamente nella funzione?
 #endif
 
 /* Definizione della struttura dati per il menu */
-struct SMenuVoice {
+typedef struct SMenuVoice {
   char label[MAX_STRING];
   THandlerFunction fn;
-};
+} SMenuVoice;
 
+template <uint8_t N>
 struct SMenu {
   char *title;
-  SMenuVoice *element;
+  SMenuVoice element[N];
 };
 
 /* Variabili globali di stato */
-bool    menu_exit = false;        // Inizializza menu exit
+bool    menu_back = false;        // Inizializza menu back
 uint8_t menu_item_id = 0;         // Inizializza variabile menu corrente
 
 /* Funzione per eseguire il menu */
-void runMenu(SMenu *menu) {
-  size_t size_voice = sizeof(menu->element);
-  size_t size_vList = sizeof(menu->element) * 7; // Fake calcolous! ;)
+template <uint8_t N>
+void runMenu(SMenu<N> *menu) {
+  size_t size_vList = sizeof(menu->element);    // Size of list
+  size_t size_voice = sizeof(*menu->element);   // Size of 1 element
   const uint8_t menu_items = (size_vList / size_voice) - 1; // Calcolo del numero di voci del menu dalla lista, meno uno
   THandlerFunction _callback(NULL); // Handler per il callback
-  uint8_t prev_menu_item_id = 0; // Dichiara ed inizializza la variabile
-  menu_exit = false; // Reimposta lo stato
+  uint8_t prev_menu_item_id = 0;    // Dichiara ed inizializza la variabile
+  bool    menu_exit = false;        // Inizializza menu exit
+  menu_back = false;                // Reimposta lo stato
   /* Il ciclo DO-WHILE, avvia il menu */
   do {
-    printScreen(menu->title, menu->element[menu_item_id].label, false);
+    if (menu_item_id == menu_items + 1) {
+      printScreen(menu->title, "<- Exit         ", false);
+    } else {
+      printScreen(menu->title, menu->element[menu_item_id].label, false);
+    }
     while (true != pressioneTasto(BUTTON_A)) {
       if (true == pressioneTasto(BUTTON_B)) {
-        _callback = menu->element[menu_item_id].fn; // Assegna il callback
-        if (_callback) {
-          prev_menu_item_id = menu_item_id; // Registra lo stato del menu attuale
-          menu_item_id = 0; // Reimposta lo stato del menu alla prima voce di default
-          _callback(); // Richiama il metodo (callback)
-          menu_exit = true; // Rileva l'uscita dal callback
+        if (menu_item_id == menu_items + 1) {
+          menu_exit = true;
+          menu_back = true;
         } else {
-          printScreen("ERRORE", "Non implementato"); delay(2000); menu_exit = true;
+          _callback = menu->element[menu_item_id].fn; // Assegna il callback
+          if (_callback) {
+            prev_menu_item_id = menu_item_id; // Registra lo stato del menu attuale
+            menu_item_id = 0; // Reimposta lo stato del menu alla prima voce di default
+            _callback(); // Richiama il metodo (callback)
+            menu_back = true; // Rileva l'uscita dal callback
+          } else {
+            printScreen("ERRORE", "Non implementato"); delay(2000); menu_back = true;
+          }
         }
       }
       polling();
       delay(1); // Per stabilita`
-      if (menu_exit == true) break; // Condizione d'uscita, esce dal while
+      if (menu_back == true) break; // Condizione d'uscita, esce dal while
     } // Fine WHILE BUTTON_A
-    if (menu_exit == true) break; // Condizione d'uscita, esce dal do-while saltando l'incremento
+    if (menu_back == true) break; // Condizione d'uscita, esce dal do-while saltando l'incremento
     menu_item_id++;
-    if (menu_item_id > menu_items) {
-      menu_item_id = 1;
+    if (menu_item_id > menu_items + 1) {
+      menu_item_id = 0;
     }
-  } while (true); // Ripete il ciclo DO-WHILE!
+  } while (!menu_exit); // Ripete il ciclo DO-WHILE, altrimenti!
   menu_item_id = prev_menu_item_id; // Uscendo dal menu, ritorna alla stessa voce da dove invocato il sotto-menu
 }
 

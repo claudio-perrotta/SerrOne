@@ -82,8 +82,8 @@ struct S_Dispositivi {
   };
 } dispositivo;
 
-uint8_t tempIdx = 0, umidIdx = 1, terrIdx = 2, luceIdx = 3;
-uint8_t led_int = 0, lampada = 1, ventola = 2, v_acqua = 3;
+enum sensorsIdx   {tempIdx = 0, umidIdx = 1, terrIdx = 2, luceIdx = 3};   // Indici sensori
+enum actuatorsIdx {led_int = 0, lampada = 1, ventola = 2, v_acqua = 3};   // Indici attuatori
 
 bool aggiornaSensori() {
   /* Ottieni il "tempo" corrente (attualmente il numero di millisecondi dall'avvio del programma) */
@@ -240,43 +240,67 @@ void ScreenSaver() {
   invertMode();
 }
 
-/* Voci e relative funzioni del menu */
-SMenuVoice menu_home[] = {
-  /* Voci del menu */
-  { "Premi il pul. A ", []() {
-      printScreen("", "Premuto pul. B! ", false); delay(2000);
-    }
-  },
-  { "1. LED On/Off  ", []() {
-      attuatoreLuce();
-    }
-  },
-  { "2. Sensore DHT  ", []() {
-      sensoreDHT();
-    }
-  },
-  { "3. Sensore terr.", []() {
-      sensoreTerreno();
-    }
-  },
-  { "4. Misurat. Ohm ", []() {
-      sensoreOhm();
-    }
-  },
-  { "5. Screen Saver ", []() {
-      ScreenSaver();
-    }
-  },
-  { "6. Riavvia      ", []() {
-      ESP.restart();
+/* Menu comandi */
+SMenu<4> menu_comandi[] = {
+  /* Titolo del menu */
+  "     COMANDI    ",
+  /* Voci e relative funzioni del menu */
+  {
+    { "1. LED On/Off   ", []() {
+        attuatoreLuce();
+      }
+    },
+    { "2. Sensore DHT  ", []() {
+        sensoreDHT();
+      }
+    },
+    { "3. Sensore terr.", []() {
+        sensoreTerreno();
+      }
+    },
+    { "4. Misurat. Ohm ", []() {
+        sensoreOhm();
+      }
     }
   }
 };
 
-SMenu menu_principale[] = {
+/* Menu sistema */
+SMenu<2> menu_sistema[] = {
+  /* Titolo del menu */
+  "     SISTEMA    ",
+  /* Voci e relative funzioni del menu */
+  {
+    { "1. Screen Saver ", []() {
+        ScreenSaver();
+      }
+    },
+    { "2. Riavvia      ", []() {
+        ESP.restart();
+      }
+    }
+  }
+};
+
+/* Menu princiale */
+SMenu<3> menu_principale[] = {
   /* Titolo del menu */
   "      MENU      ",
-  menu_home
+  /* Voci e relative funzioni del menu */
+  {
+    { "Premi il pul. A ", []() {
+        printScreen("", "Premuto pul. B! ", false); delay(2000);
+      }
+    },
+    { "1. Comandi      ", []() {
+        runMenu(menu_comandi);
+      }
+    },
+    { "2. Sistema      ", []() {
+        runMenu(menu_sistema);
+      }
+    }
+  }
 };
 
 void setup() {

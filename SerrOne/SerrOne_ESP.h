@@ -1,17 +1,30 @@
-/* SerrOne ESP8266 */
+/* SerrOne ESP */
 #pragma once
 
 /* EEPROM */
+#ifdef ESP8266
 #include <EEPROM.h>
+
+#elif ESP32
+#include "EEPROM.h"
+
+#endif //ESPs
 int addr = 0;
 
 /* WiFi */
+#ifdef ESP8266
 #include <ESP8266WiFi.h>
+
+#elif ESP32
+#include <WiFi.h>
+
+#endif //ESPs
+
 #include <WiFiClient.h> // E` necessario? Migliora la stabilita` della connessione?
 
 /* Configurazione Wi-Fi */
-char*       WFAP_SSID = "SerrOne_AP";
-char*       WFAP_PASS = "12345678";
+String      WFAP_SSID = "SerrOne_";
+String      WFAP_PASS = "12345678";
 String      WIFI_SSID = "";
 String      WIFI_PASS = "";
 WiFiMode_t  WIFI_MODE = WIFI_AP;  // Imposta: WIFI_AP | WIFI_STA | WIFI_AP_STA | WIFI_OFF
@@ -23,16 +36,22 @@ IPAddress ap_IP(192, 168, 4, 1);
 //IPAddress ap_gw(192, 168, 1, 1);
 //IPAddress ap_sn(255, 255, 255, 0);
 
-/* Client */
+/* HTTP Client */
+#ifdef ESP8266
 #include <ESP8266HTTPClient.h>
+
+#elif ESP32
+#include <HTTPClient.h>
+
+#endif //ESPs
 HTTPClient http; // 'http' object is created of class 'HTTPClient'
 
-/* DNSServer */
+/* DNS Server */
 #include <DNSServer.h>
 const byte DNS_PORT = 53;
 DNSServer dnsServer;
 
-/* WebServer */
+/* Web Server */
 //#define SERVERSECURE 0  // 1 = usa https | 0 = usa http
 #ifdef SERVERSECURE
 #include <ESP8266WebServerSecure.h>
@@ -166,9 +185,9 @@ void wifiSetup() {
 
   /* Connetti */
   if ( (WIFI_MODE == WIFI_AP_STA) || (WIFI_MODE == WIFI_AP) ) {
-    printScreen("Avvio AP...", WFAP_SSID);
+    printScreen("Avvio AP...", WFAP_SSID.c_str());
     //WiFi.softAPConfig(ap_IP, ap_gw, ap_sn);
-    WiFi.softAP(WFAP_SSID, WFAP_PASS);
+    WiFi.softAP((WFAP_SSID + String(ESP.getChipId(), HEX)).c_str(), WFAP_PASS.c_str());
     printScreen((String("Channel: ") + String(WiFi.channel())).c_str(), String("SoftAPIP: " + WiFi.softAPIP().toString()).c_str());
   }
   if ( (WIFI_MODE == WIFI_AP_STA) || (WIFI_MODE == WIFI_STA) ) {
@@ -280,4 +299,3 @@ void webServerSetup() {
 }
 
 /* End */
-

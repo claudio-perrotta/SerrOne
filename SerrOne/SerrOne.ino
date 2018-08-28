@@ -9,7 +9,7 @@
 
    This code is in the public domain.
 */
-
+//#include <Arduino.h>
 #include "SerrOne_Version.h"
 
 /* Configurazione debug */
@@ -27,8 +27,6 @@
 /* Configurazione PIN tasti */
 #define BUTTON_A    15            // Select
 #define BUTTON_B    12            // OK
-#define BUTTON_C    14            // ?
-#define BUTTON_D    16            // ?
 
 /* Include la libreria Wire per il bus I2C */
 #include <Wire.h>                 // Libreria Wire per il bus I2C
@@ -109,7 +107,9 @@ bool aziona(S_Attuatore &a, bool condizione = true) {
       digitalWrite(a.pin, HIGH);
       a.stato = HIGH;
 #ifdef ENABLE_DEBUG
+#ifndef AVR
       Serial.printf("[AZIONA] Dispositivo sul pin #%d (%s) stato: %s\n", a.pin, a.nome, a.stato ? "ON!" : "OFF");
+#endif //ndef AVR
 #endif //ENABLE_DEBUG
       return true;
     }
@@ -118,7 +118,9 @@ bool aziona(S_Attuatore &a, bool condizione = true) {
       digitalWrite(a.pin, LOW);
       a.stato = LOW;
 #ifdef ENABLE_DEBUG
+#ifndef AVR
       Serial.printf("[AZIONA] Dispositivo sul pin #%d (%s) stato: %s\n", a.pin, a.nome, a.stato ? "ON!" : "OFF");
+#endif //ndef AVR
 #endif //ENABLE_DEBUG
       return true;
     }
@@ -136,10 +138,17 @@ void controllaAutomatizzazione() {
 /* Inclusione librerie per il menu e lo schermo */
 #include "SerrOne_Screen.h"
 
-/* Inclusione librerie esclusive per ESP8266 */
-#ifdef ESP8266
-#include "SerrOne_ESP8266.h"
-#endif //ESP8266
+/* Inclusione librerie esclusive per ESP */
+#if defined(AVR)
+//#include <Arduino.h> // <- placeholder
+
+#elif defined(ESP8266) || defined(ESP32)
+#include "SerrOne_ESP.h"
+
+#else
+#error Platform not supported
+
+#endif //Platforms
 
 /* Routine per il polling */
 void polling(void) {
@@ -231,11 +240,15 @@ void sensoreOhm() {
 /* Funzionalita` 5 */
 void ScreenSaver() {
   ssd1306_drawBitmap(0, 0, 128, 32, logo);
+#ifndef AVR
   tickerBlink.attach(1, invertMode);
+#endif //ndef AVR
   do {
     polling();
   } while (true != pressioneTasto(BUTTON_A));
+#ifndef AVR
   tickerBlink.detach();
+#endif //ndef AVR
   invertModeState = false;
   invertMode();
 }
@@ -276,7 +289,9 @@ SMenu<2> menu_sistema[] = {
       }
     },
     { "2. Riavvia      ", []() {
+#ifndef AVR
         ESP.restart();
+#endif //ndef AVR
       }
     }
   }
@@ -307,7 +322,9 @@ void setup() {
 #ifdef ENABLE_DEBUG
   /* Inizializza Serial Monitor */
   Serial.begin(SERIAL_BAUDRATE);
+#ifndef AVR
   Serial.printf("\n[DEBUG] SerrOne - ver. %s\n[DEBUG] Compilation began %s at %s with C++%d\n", Version::toString(), __DATE__, __TIME__, __cplusplus);
+#endif //ndef AVR
 #endif //ENABLE_DEBUG
   /* Initial start time */
   tempo_iniziale = millis();
@@ -361,4 +378,3 @@ void loop() {
    There is also a yield() function which is equivalent to delay(0). The delayMicroseconds function, on the other
    hand, does not yield to other tasks, so using it for delays more than 20 milliseconds is not recommended.
 */
-

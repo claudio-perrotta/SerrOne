@@ -288,10 +288,8 @@ SMenu<2> menu_sistema[] = {
         ScreenSaver();
       }
     },
-    { "2. Riavvia      ", []() {
-#ifndef AVR
-        ESP.restart();
-#endif //ndef AVR
+    { "2. Versione FW  ", []() {
+        printScreen("", Version::toString(), false); delay(2000);
       }
     }
   }
@@ -323,7 +321,7 @@ void setup() {
   /* Inizializza Serial Monitor */
   Serial.begin(SERIAL_BAUDRATE);
 #ifndef AVR
-  Serial.printf("\n[DEBUG] SerrOne - ver. %s\n[DEBUG] Compilation began %s at %s with C++%d\n", Version::toString(), __DATE__, __TIME__, __cplusplus);
+  Serial.printf("\n[DEBUG] SerrOne - ver. %s\n[DEBUG] Compilation began %s at %s with C++%ld\n", Version::toString(), __DATE__, __TIME__, __cplusplus);
 #endif //ndef AVR
 #endif //ENABLE_DEBUG
   /* Initial start time */
@@ -341,7 +339,7 @@ void setup() {
   wifiSetup();
   /* Configura l'orario */
   configTime(timezone * 3600, dst * 3600, "pool.ntp.org", "time.nist.gov");
-  if (WIFI_MODE != WIFI_AP) {
+  if (WiFi.getMode() != WIFI_AP) {
     for (uint8_t i = 1; i <= 10; i++) {
       printScreen("Config. ora...", String(i).c_str());
       if (time(nullptr) > 38880) break;
@@ -350,7 +348,7 @@ void setup() {
   }
   /* Configura il Server DNS */
   dnsServerSetup();
-  /* Configura il WebServer */
+  /* Configura il Web Server */
   webServerSetup();
   /* Scheduler per l'invio dei dati al server */
   tickerPush.attach(60, push);

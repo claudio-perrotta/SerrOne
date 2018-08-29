@@ -9,9 +9,9 @@
 #include "EEPROM.h"
 
 #endif //ESPs
-int addr = 0;
+//int addr = 0;
 
-/* WiFi */
+/* Wi-Fi */
 #ifdef ESP8266
 #include <ESP8266WiFi.h>
 
@@ -23,18 +23,58 @@ int addr = 0;
 #include <WiFiClient.h> // E` necessario? Migliora la stabilita` della connessione?
 
 /* Configurazione Wi-Fi */
-String      WFAP_SSID = "SerrOne_";
-String      WFAP_PASS = "12345678";
-String      WIFI_SSID = "";
-String      WIFI_PASS = "";
-WiFiMode_t  WIFI_MODE = WIFI_AP;  // Imposta: WIFI_AP | WIFI_STA | WIFI_AP_STA | WIFI_OFF
-const char* LOCAL_URL = "serrone.local";
-//IPAddress local_IP(192, 168, 4, 22);
-//IPAddress gateway(192, 168, 4, 9);
-//IPAddress subnet(255, 255, 255, 0);
+union config_u {
+  struct config_s {
+    char        WFAP_SSID[32 + 1] = "SerrOne_";
+    char        WFAP_PASS[64 + 1] = "12345678";
+    char        WIFI_SSID[32 + 1] = "";
+    char        WIFI_PASS[64 + 1] = "";
+    WiFiMode_t  WIFI_MODE = WIFI_AP;  // Imposta: WIFI_AP | WIFI_STA | WIFI_AP_STA | WIFI_OFF
+  } param;
+  byte data[sizeof(config_s)];
+  config_u() {} // Due to the `struct` member, a constructor definition is now needed.
+} config, *config_p;
+
+void defaultConfig() {
+  strcpy(config.param.WFAP_SSID, (String("SerrOne_") + String(ESP.getChipId(), HEX)).c_str());
+  strcpy(config.param.WFAP_PASS, String("12345678").c_str());
+  strcpy(config.param.WIFI_SSID, String("").c_str());
+  strcpy(config.param.WIFI_PASS, String("").c_str());
+  config.param.WIFI_MODE = WIFI_AP;  // Imposta: WIFI_AP | WIFI_STA | WIFI_AP_STA | WIFI_OFF
+  Serial.println(config.param.WFAP_SSID);
+}
+
+//enum {READ, WRITE};
+int offset = 1;
+void save() {
+  EEPROM.begin(512);
+  EEPROM.write(0, '\x5A');
+  Serial.println("save config");
+  for (int i = offset; i < sizeof(config.data); i++)
+    EEPROM.write(i, config.data[i]);
+  EEPROM.end();
+}
+
+void load() {
+  EEPROM.begin(512);
+  if  (EEPROM.read(0) == '\x5A') {
+    Serial.println("load config");
+    for (int i = offset; i < sizeof(config.data); i++)
+      config.data[i] = EEPROM.read(i);
+  } else {
+    Serial.println("default config");
+    defaultConfig();
+  }
+  EEPROM.end();
+}
+
+/* IPv4 addresses */
+//IPAddress local_IP = IPAddress(192, 168, 4, 22);
+//IPAddress gateway = IPAddress(192, 168, 4, 9);
+//IPAddress subnet = IPAddress(255, 255, 255, 0);
 IPAddress ap_IP(192, 168, 4, 1);
-//IPAddress ap_gw(192, 168, 1, 1);
-//IPAddress ap_sn(255, 255, 255, 0);
+//IPAddress ap_gw = IPAddress(192, 168, 1, 1);
+//IPAddress ap_sn = IPAddress(255, 255, 255, 0);
 
 /* HTTP Client */
 #ifdef ESP8266
@@ -50,6 +90,7 @@ HTTPClient http; // 'http' object is created of class 'HTTPClient'
 #include <DNSServer.h>
 const byte DNS_PORT = 53;
 DNSServer dnsServer;
+char LOCAL_URL[13 + 1] = "serrone.local";
 
 /* Web Server */
 //#define SERVERSECURE 0  // 1 = usa https | 0 = usa http
@@ -69,7 +110,7 @@ ESP8266WebServer webServer(80);
 const char* www_username = "admin";
 const char* www_password = "esp8266";
 
-/* FileSystem */
+/* File System */
 #include <FS.h>
 
 /* Ticker is an object that will call a given function with a certain period. */
@@ -179,21 +220,26 @@ void wifiSetup() {
   WiFi.softAPdisconnect();
   WiFi.disconnect();
 
+  /* Configurazione */
+  load();
+  printScreen("Configurazione:", String(sizeof(config.data)).c_str() );
+
   /* Imposta la modalita` WiFi del modulo ESP */
-  WiFi.mode(WIFI_MODE);
+  WiFi.mode(config.param.WIFI_MODE);
   WiFi.hostname(LOCAL_URL);      // DHCP Hostname (useful for finding device for static lease)
 
-  /* Connetti */
-  if ( (WIFI_MODE == WIFI_AP_STA) || (WIFI_MODE == WIFI_AP) ) {
-    printScreen("Avvio AP...", WFAP_SSID.c_str());
+  /* Connetti AP */
+  if ( (config.param.WIFI_MODE == WIFI_AP_STA) || (config.param.WIFI_MODE == WIFI_AP) ) {
+    printScreen("Avvio AP...", config.param.WFAP_SSID);
     //WiFi.softAPConfig(ap_IP, ap_gw, ap_sn);
-    WiFi.softAP((WFAP_SSID + String(ESP.getChipId(), HEX)).c_str(), WFAP_PASS.c_str());
+    WiFi.softAP(config.param.WFAP_SSID, config.param.WFAP_PASS);
     printScreen((String("Channel: ") + String(WiFi.channel())).c_str(), String("SoftAPIP: " + WiFi.softAPIP().toString()).c_str());
   }
-  if ( (WIFI_MODE == WIFI_AP_STA) || (WIFI_MODE == WIFI_STA) ) {
-    printScreen("Connessione a...", WIFI_SSID.c_str());
+  /* Connetti STA */
+  if ( (config.param.WIFI_MODE == WIFI_AP_STA) || (config.param.WIFI_MODE == WIFI_STA) ) {
+    printScreen("Connessione a...", config.param.WIFI_SSID);
     //WiFi.config(local_IP, gateway, subnet);  // (DNS not required)
-    WiFi.begin(WIFI_SSID.c_str(), WIFI_PASS.c_str());
+    WiFi.begin(config.param.WIFI_SSID, config.param.WIFI_PASS);
     /* Aspetta il risultato della connessione */
     if (WiFi.waitForConnectResult() != WL_CONNECTED) {
       WiFi.mode(WIFI_AP); // da testare!!!
@@ -203,7 +249,7 @@ void wifiSetup() {
   }
 
   /* Connesso! */
-  printScreen("Config. WiFi", "terminata!");
+  printScreen("Config. Wi-Fi", "terminata!");
 
 #ifdef ENABLE_DEBUG
   Serial.write(12);   // FormFeed
@@ -277,9 +323,12 @@ void webServerSetup() {
 
   webServer.on("/wifi", []() {
     if (webServer.hasArg("ssid") && webServer.hasArg("pswd")) {
-      WIFI_SSID = webServer.arg("ssid");
-      WIFI_PASS = webServer.arg("pswd");
-      WIFI_MODE = WIFI_AP_STA;
+      //config.param.WIFI_SSID = webServer.arg("ssid").c_str();
+      //config.param.WIFI_PASS = webServer.arg("pswd").c_str();
+      strcpy(config.param.WIFI_SSID, webServer.arg("ssid").c_str());
+      strcpy(config.param.WIFI_PASS, webServer.arg("pswd").c_str());
+      config.param.WIFI_MODE = WIFI_AP_STA;
+      save();
       webServer.send(200, "text/html", "<p>Configurazione WiFi completata</p>");
       setup();
     } else {

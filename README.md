@@ -20,6 +20,10 @@ Debug is enabled by default on Serial. To disable, comment this line:
 ```
 
 ## Releases
+
+#### 0.11
++ added save/load wi-fi config from eeprom
+
 #### 0.10
 + added sub menu and upgrade esisting menu's function
 - bug fixes and memory improvements

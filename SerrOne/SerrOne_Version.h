@@ -4,8 +4,8 @@
 namespace Version
 {
 const uint8_t   MAJOR     = 0;
-const uint8_t   MINOR     = 10;
-const uint16_t  REVISION  = 1002;
+const uint8_t   MINOR     = 11;
+const uint16_t  REVISION  = 1000;
 const char*     STAGE     = "pre-alpha";
 String version;
 

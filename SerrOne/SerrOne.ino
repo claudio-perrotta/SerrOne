@@ -164,6 +164,11 @@ void polling(void) {
     last = millis();
     Serial.printf("[POLLING] Free heap: %d bytes\n", ESP.getFreeHeap());
   }
+  static unsigned long last1 = millis();
+  if (millis() - last1 > 60000) {
+    last1 = millis();
+    Serial.printf("[PUSH] Payload: %s\n", httpConnect().c_str());
+  }
 #endif //ENABLE_DEBUG
 #endif //ESP8266
 }
@@ -351,7 +356,7 @@ void setup() {
   /* Configura il Web Server */
   webServerSetup();
   /* Scheduler per l'invio dei dati al server */
-  tickerPush.attach(60, push);
+  //tickerPush.attach(60, push);
 #endif //ESP8266
   /* Pulisci LCD e spegni il LED */
 #ifdef USE_LCD

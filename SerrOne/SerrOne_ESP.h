@@ -4,6 +4,7 @@
 /* EEPROM */
 #ifdef ESP8266
 #include <EEPROM.h>
+#include <Hash.h> // Per controllare l'integrita` dei dati
 
 #elif ESP32
 #include "EEPROM.h"
@@ -30,6 +31,7 @@ union config_u {
     char        WIFI_SSID[32 + 1] = "";
     char        WIFI_PASS[64 + 1] = "";
     WiFiMode_t  WIFI_MODE = WIFI_AP;  // Imposta: WIFI_AP | WIFI_STA | WIFI_AP_STA | WIFI_OFF
+    uint8_t     hash[20];
   } param;
   byte data[sizeof(config_s)];
   config_u() {} // Due to the `struct` member, a constructor definition is now needed.
@@ -37,34 +39,47 @@ union config_u {
 
 void defaultConfig() {
   strcpy(config.param.WFAP_SSID, (String("SerrOne_") + String(ESP.getChipId(), HEX)).c_str());
-  strcpy(config.param.WFAP_PASS, String("12345678").c_str());
-  strcpy(config.param.WIFI_SSID, String("").c_str());
-  strcpy(config.param.WIFI_PASS, String("").c_str());
-  config.param.WIFI_MODE = WIFI_AP;  // Imposta: WIFI_AP | WIFI_STA | WIFI_AP_STA | WIFI_OFF
+  strcpy(config.param.WFAP_PASS, "12345678");
+  strcpy(config.param.WIFI_SSID, "");
+  strcpy(config.param.WIFI_PASS, "");
+  config.param.WIFI_MODE = WIFI_AP; // Imposta: WIFI_AP | WIFI_STA | WIFI_AP_STA | WIFI_OFF
   Serial.println(config.param.WFAP_SSID);
 }
 
-//enum {READ, WRITE};
-int offset = 1;
-void save() {
-  EEPROM.begin(512);
-  EEPROM.write(0, '\x5A');
-  Serial.println("save config");
-  for (int i = offset; i < sizeof(config.data); i++)
-    EEPROM.write(i, config.data[i]);
-  EEPROM.end();
+bool compare() {
+  uint8_t hash[20];
+  sha1(config.data, sizeof(config.data) - sizeof(config.param.hash), &hash[0]);
+  return memcmp(config.param.hash, hash, 20) == 0 ? true : false;
 }
 
-void load() {
+//enum {READ, WRITE};
+const int offset = 0;
+
+void saveConfig() {
   EEPROM.begin(512);
-  if  (EEPROM.read(0) == '\x5A') {
-    Serial.println("load config");
-    for (int i = offset; i < sizeof(config.data); i++)
-      config.data[i] = EEPROM.read(i);
+
+  sha1(config.data, sizeof(config.data) - sizeof(config.param.hash), &config.param.hash[0]); // Crea hash in struct
+
+  for (int i = offset; i < sizeof(config.data); i++) // Scrivi tutta la struttura dati nella memoria
+    EEPROM.write(i, config.data[i]);
+  printScreen("Configurazione", "salvata");
+
+  EEPROM.end(); // EEPROM.commit();
+}
+
+void loadConfig() {
+  EEPROM.begin(512);
+
+  for (int i = offset; i < sizeof(config.data); i++) // Leggi tutta la struttura dati dalla memoria
+    config.data[i] = EEPROM.read(i);
+
+  if (compare()) {
+    printScreen("Configurazione", "caricata");
   } else {
-    Serial.println("default config");
     defaultConfig();
+    printScreen("Configurazione", "di default");
   }
+
   EEPROM.end();
 }
 
@@ -221,8 +236,7 @@ void wifiSetup() {
   WiFi.disconnect();
 
   /* Configurazione */
-  load();
-  printScreen("Configurazione:", String(sizeof(config.data)).c_str() );
+  loadConfig();
 
   /* Imposta la modalita` WiFi del modulo ESP */
   WiFi.mode(config.param.WIFI_MODE);
@@ -328,7 +342,7 @@ void webServerSetup() {
       strcpy(config.param.WIFI_SSID, webServer.arg("ssid").c_str());
       strcpy(config.param.WIFI_PASS, webServer.arg("pswd").c_str());
       config.param.WIFI_MODE = WIFI_AP_STA;
-      save();
+      saveConfig();
       webServer.send(200, "text/html", "<p>Configurazione WiFi completata</p>");
       setup();
     } else {

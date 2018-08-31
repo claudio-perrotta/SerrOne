@@ -54,9 +54,11 @@ void printScreen(const char *line0, const char *line1, bool need_clear = true) {
 #ifdef ENABLE_DEBUG
   if (need_clear)
     Serial.write(12);   // FormFeed
-  Serial.println();
-  Serial.println(line0);
-  Serial.println(line1);
+  Serial.println("\n[ SCREEN ]");
+  Serial.println("+----------------+");
+  Serial.print("|"); Serial.print(line0); Serial.println("|");
+  Serial.print("|"); Serial.print(line1); Serial.println("|");
+  Serial.println("+----------------+");
 #endif //ENABLE_DEBUG
 }
 
@@ -73,7 +75,7 @@ void screenSetup() {
   delay(50);
   digitalWrite(RST_OLED, HIGH); // while OLED is running, must set D2 in high
   ssd1306_128x32_i2c_init();
-  ssd1306_setFixedFont(ssd1306xled_font8x16);
+  ssd1306_setFixedFont(ssd1306xled_font6x8);
 #endif //USE_LCD
 }
 
@@ -87,7 +89,7 @@ void splashScreen() {
     delay(2000 / LCD_W);
   }
 #else
-  ssd1306_drawBitmap(0, 0, 128, 32, logo);
+  //ssd1306_drawBitmap(0, 0, 128, 32, logo);
   for (uint8_t i = 0; i < 16; i++) {
     ssd1306_printFixed (i * 8, 32, "_", STYLE_NORMAL);
     delay(2000 / 16);

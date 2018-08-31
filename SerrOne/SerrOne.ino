@@ -20,7 +20,8 @@
 #define DHT_PIN     15            // Il pin digitale al quale e` connesso il DHT
 #define DHT_TYPE    DHT11         // Tipo di sensore DHT
 #define SM_PIN      A0            // PIN sensore umidita` suolo (Soil Moisture Sensor's PIN)
-#define LIGHT_PIN   LED_BUILTIN   // PIN della luce
+#define LED_PIN     15            // PIN del led integrato `LED_BUILTIN`
+#define LIGHT_PIN   0             // PIN della luce
 #define FAN_PIN     0             // PIN della ventola
 #define WATER_VALVE 0             // PIN della valvola acqua
 
@@ -83,7 +84,7 @@ struct S_Dispositivi {
 enum sensorsIdx   {tempIdx = 0, umidIdx = 1, terrIdx = 2, luceIdx = 3};   // Indici sensori
 enum actuatorsIdx {led_int = 0, lampada = 1, ventola = 2, v_acqua = 3};   // Indici attuatori
 
-bool aggiornaSensori() {
+bool aggiornaSensori(void) {
   /* Ottieni il "tempo" corrente (attualmente il numero di millisecondi dall'avvio del programma) */
   tempo_corrente = millis();
   /* Controlla quando il periodo e` superato - Test whether the period has elapsed */
@@ -92,6 +93,7 @@ bool aggiornaSensori() {
     dispositivo.sensore[tempIdx].valore = dht.readTemperature();
     dispositivo.sensore[umidIdx].valore = dht.readHumidity();
     dispositivo.sensore[terrIdx].valore = constrain(map(analogRead(SM_PIN), 0, 1023, 0, 100), 0, 100);
+    dispositivo.sensore[luceIdx].valore = 127;
     /* IMPORTANT to save the start time of the current sensors state */
     tempo_iniziale = tempo_corrente;
     //jsonToFile(structToJson(&dispositivo));
@@ -108,7 +110,7 @@ bool aziona(S_Attuatore &a, bool condizione = true) {
       a.stato = HIGH;
 #ifdef ENABLE_DEBUG
 #ifndef AVR
-      Serial.printf("[AZIONA] Dispositivo sul pin #%d (%s) stato: %s\n", a.pin, a.nome, a.stato ? "ON!" : "OFF");
+      Serial.printf("[ AZIONA ] Dispositivo sul pin #%d (%s) stato: %s\n", a.pin, a.nome, a.stato ? "ON!" : "OFF");
 #endif //ndef AVR
 #endif //ENABLE_DEBUG
       return true;
@@ -119,7 +121,7 @@ bool aziona(S_Attuatore &a, bool condizione = true) {
       a.stato = LOW;
 #ifdef ENABLE_DEBUG
 #ifndef AVR
-      Serial.printf("[AZIONA] Dispositivo sul pin #%d (%s) stato: %s\n", a.pin, a.nome, a.stato ? "ON!" : "OFF");
+      Serial.printf("[ AZIONA ] Dispositivo sul pin #%d (%s) stato: %s\n", a.pin, a.nome, a.stato ? "ON!" : "OFF");
 #endif //ndef AVR
 #endif //ENABLE_DEBUG
       return true;
@@ -129,7 +131,7 @@ bool aziona(S_Attuatore &a, bool condizione = true) {
 }
 
 /* Metodo per controllare gli attuatori */
-void controllaAutomatizzazione() {
+void controllaAutomatizzazione(void) {
   aziona(dispositivo.attuatore[lampada],  dispositivo.sensore[umidIdx].valore < 55);
   aziona(dispositivo.attuatore[ventola], (dispositivo.sensore[tempIdx].valore > 30) || (dispositivo.sensore[umidIdx].valore > 85) );
   aziona(dispositivo.attuatore[v_acqua],  dispositivo.sensore[terrIdx].valore < 40);
@@ -144,6 +146,7 @@ void controllaAutomatizzazione() {
 
 #elif defined(ESP8266) || defined(ESP32)
 #include "SerrOne_ESP.h"
+#include "SerrOne_RestOverMQTT.h"
 
 #else
 #error Platform not supported
@@ -156,19 +159,23 @@ void polling(void) {
   controllaAutomatizzazione();
 #ifdef ESP8266
   dnsServer.processNextRequest();
+  yield();
   webServer.handleClient();
+  yield();
+  //if (WiFi.status() == WL_CONNECTED) rest.handle(mqttClient); // Connect to the cloud
   yield(); // Per la compatibilita` con i servizi in background dell'ESP
 #ifdef ENABLE_DEBUG
-  static unsigned long last = millis();
-  if (millis() - last > 5000) {
-    last = millis();
-    Serial.printf("[POLLING] Free heap: %d bytes\n", ESP.getFreeHeap());
+
+  /* Scheduler per il monitoring della memoria heap */
+  for (static uint32_t last1 = millis(); millis() - last1 > 5000; last1 = millis()) {
+    Serial.printf("[ POLLING] Free heap: %d bytes\n", ESP.getFreeHeap());
   }
-  static unsigned long last1 = millis();
-  if (millis() - last1 > 60000) {
-    last1 = millis();
-    Serial.printf("[PUSH] Payload: %s\n", httpConnect().c_str());
+
+  /* Scheduler per l'invio dei dati al server */
+  for (static uint32_t last2 = millis(); millis() - last2 > 6000; last2 = millis()) {
+    Serial.printf("[  PUSH  ] Payload: %s\n", httpConnect().c_str());
   }
+
 #endif //ENABLE_DEBUG
 #endif //ESP8266
 }
@@ -182,7 +189,7 @@ void BalternaStatoPIN(int pin, bool& stato) {
 }
 
 /* Funzionalita` 1 */
-void attuatoreLuce() {
+void attuatoreLuce(void) {
   String ln_1 = String(dispositivo.attuatore[led_int].nome);
   String ln_2 = String(dispositivo.attuatore[led_int].stato ? "Dispositivo ON!" : "Dispositivo OFF");
   printScreen(ln_1.c_str(), ln_2.c_str());
@@ -201,7 +208,7 @@ void attuatoreLuce() {
 }
 
 /* Funzionalita` 2 */
-void sensoreDHT() {
+void sensoreDHT(void) {
   printScreen("", msg_attendere, false);
   do {
     if (aggiornaSensori() == true) {
@@ -214,7 +221,7 @@ void sensoreDHT() {
 }
 
 /* Funzionalita` 3 */
-void sensoreTerreno() {
+void sensoreTerreno(void) {
   printScreen("", msg_attendere, false);
   do {
     if (aggiornaSensori() == true) {
@@ -226,7 +233,7 @@ void sensoreTerreno() {
 }
 
 /* Funzionalita` 4 */
-void sensoreOhm() {
+void sensoreOhm(void) {
   printScreen("", msg_attendere, false);
   int Vin = 5; // Volt in uscita dal Pin 5V di Arduino
   float R1 = 1000; // impostare il valore della resistenza nota in Ohm
@@ -243,17 +250,15 @@ void sensoreOhm() {
 }
 
 /* Funzionalita` 5 */
-void ScreenSaver() {
-  ssd1306_drawBitmap(0, 0, 128, 32, logo);
-#ifndef AVR
-  tickerBlink.attach(1, invertMode);
-#endif //ndef AVR
+void ScreenSaver(void) {
+  //ssd1306_drawBitmap(0, 0, 128, 32, logo);
   do {
+    /* Scheduler per l'inversione dei colori */
+    for (static uint32_t last0 = millis(); millis() - last0 > 1000; last0 = millis()) {
+      invertMode();
+    }
     polling();
   } while (true != pressioneTasto(BUTTON_A));
-#ifndef AVR
-  tickerBlink.detach();
-#endif //ndef AVR
   invertModeState = false;
   invertMode();
 }
@@ -355,8 +360,8 @@ void setup() {
   dnsServerSetup();
   /* Configura il Web Server */
   webServerSetup();
-  /* Scheduler per l'invio dei dati al server */
-  //tickerPush.attach(60, push);
+  /* Configura REST API */
+  restSetup();
 #endif //ESP8266
   /* Pulisci LCD e spegni il LED */
 #ifdef USE_LCD

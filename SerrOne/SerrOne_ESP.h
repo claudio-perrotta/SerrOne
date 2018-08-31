@@ -37,6 +37,8 @@ union config_u {
   config_u() {} // Due to the `struct` member, a constructor definition is now needed.
 } config, *config_p;
 
+char* esp_id = &config.param.WFAP_SSID[8];
+
 void defaultConfig() {
   strcpy(config.param.WFAP_SSID, (String("SerrOne_") + String(ESP.getChipId(), HEX)).c_str());
   strcpy(config.param.WFAP_PASS, "12345678");
@@ -108,7 +110,7 @@ DNSServer dnsServer;
 char LOCAL_URL[13 + 1] = "serrone.local";
 
 /* Web Server */
-//#define SERVERSECURE 0  // 1 = usa https | 0 = usa http
+//#define SERVERSECURE 1  // 1 = usa https | 0 = usa http
 #ifdef SERVERSECURE
 #include <ESP8266WebServerSecure.h>
 ESP8266WebServerSecure webServer(443);
@@ -129,9 +131,8 @@ const char* www_password = "esp8266";
 #include <FS.h>
 
 /* Ticker is an object that will call a given function with a certain period. */
-#include <Ticker.h>
-Ticker tickerPush;
-Ticker tickerBlink;
+//#include <Ticker.h>
+//Ticker tickerPush;
 
 /* Functions */
 
@@ -190,7 +191,7 @@ String recombinePartialJson(char *path) {
 }
 //EndSaveJson
 
-String httpConnect() {
+String httpConnect(void) {
   String payload;
   if ((WiFi.status() == WL_CONNECTED)) {
     /* allow reuse (if server supports it) */
@@ -198,7 +199,7 @@ String httpConnect() {
 
     /* configure traged server and url */
     String clientUrl = "http://claudius.altervista.org/push.php";
-    clientUrl += "?token=asdfghjkl";
+    clientUrl += "?token=" + *esp_id;
     clientUrl += "&user=admin";
     //http.begin("https://192.168.1.12/test.html", "7a 9c f4 db 40 d3 62 5a 6e 21 bc 5c cc 66 c8 3e a1 45 59 38"); //HTTPS
     http.begin(clientUrl); //HTTP
@@ -217,7 +218,7 @@ String httpConnect() {
       }
     } else {
       /* httpCode will be negative on error */
-      payload = String("[HTTP/S] GET... fallita, errore: ") + http.errorToString(httpCode);
+      payload = String("GET... fallita, errore: ") + http.errorToString(httpCode);
     }
     http.end();
   } else {
@@ -225,9 +226,6 @@ String httpConnect() {
     payload = "WiFi Station... non connessa!";
   }
   return payload;
-}
-void push() {
-  httpConnect();
 }
 
 void wifiSetup() {
@@ -337,8 +335,6 @@ void webServerSetup() {
 
   webServer.on("/wifi", []() {
     if (webServer.hasArg("ssid") && webServer.hasArg("pswd")) {
-      //config.param.WIFI_SSID = webServer.arg("ssid").c_str();
-      //config.param.WIFI_PASS = webServer.arg("pswd").c_str();
       strcpy(config.param.WIFI_SSID, webServer.arg("ssid").c_str());
       strcpy(config.param.WIFI_PASS, webServer.arg("pswd").c_str());
       config.param.WIFI_MODE = WIFI_AP_STA;

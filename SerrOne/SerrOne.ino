@@ -20,10 +20,10 @@
 #define DHT_PIN     15            // Il pin digitale al quale e` connesso il DHT
 #define DHT_TYPE    DHT11         // Tipo di sensore DHT
 #define SM_PIN      A0            // PIN sensore umidita` suolo (Soil Moisture Sensor's PIN)
-#define LED_PIN     15            // PIN del led integrato `LED_BUILTIN`
-#define LIGHT_PIN   0             // PIN della luce
-#define FAN_PIN     0             // PIN della ventola
-#define WATER_VALVE 0             // PIN della valvola acqua
+#define LED_PIN     D3            // PIN del led `LED_BUILTIN`
+#define LIGHT_PIN   D8            // PIN della luce
+#define FAN_PIN     D7            // PIN della ventola
+#define WATER_VALVE D6            // PIN della valvola acqua
 
 /* Configurazione PIN tasti */
 #define BUTTON_A    15            // Select
@@ -74,7 +74,7 @@ struct S_Dispositivi {
   };
   /* Definisce ed inizializza gli attuatori */
   S_Attuatore attuatore[4] = {
-    {"LED integrato", LED_BUILTIN, LOW},
+    {"LED integrato", LED_PIN, LOW},
     {"Lampada", LIGHT_PIN, LOW},
     {"Ventola", FAN_PIN, LOW},
     {"Valvola acqua", WATER_VALVE, LOW}
@@ -110,7 +110,7 @@ bool aziona(S_Attuatore &a, bool condizione = true) {
       a.stato = HIGH;
 #ifdef ENABLE_DEBUG
 #ifndef AVR
-      Serial.printf("[ AZIONA ] Dispositivo sul pin #%d (%s) stato: %s\n", a.pin, a.nome, a.stato ? "ON!" : "OFF");
+      Serial.printf("[ ACTION ] Dispositivo sul pin #%d (%s) stato: %s\n", a.pin, a.nome, a.stato ? "ON!" : "OFF");
 #endif //ndef AVR
 #endif //ENABLE_DEBUG
       return true;
@@ -121,7 +121,7 @@ bool aziona(S_Attuatore &a, bool condizione = true) {
       a.stato = LOW;
 #ifdef ENABLE_DEBUG
 #ifndef AVR
-      Serial.printf("[ AZIONA ] Dispositivo sul pin #%d (%s) stato: %s\n", a.pin, a.nome, a.stato ? "ON!" : "OFF");
+      Serial.printf("[ ACTION ] Dispositivo sul pin #%d (%s) stato: %s\n", a.pin, a.nome, a.stato ? "ON!" : "OFF");
 #endif //ndef AVR
 #endif //ENABLE_DEBUG
       return true;
@@ -156,23 +156,23 @@ void controllaAutomatizzazione(void) {
 /* Routine per il polling */
 void polling(void) {
   aggiornaSensori();
-  controllaAutomatizzazione();
+  //controllaAutomatizzazione();
 #ifdef ESP8266
   dnsServer.processNextRequest();
   yield();
   webServer.handleClient();
   yield();
-  //if (WiFi.status() == WL_CONNECTED) rest.handle(mqttClient); // Connect to the cloud
+  if (WiFi.status() == WL_CONNECTED) rest.handle(mqttClient); // Connect to the cloud
   yield(); // Per la compatibilita` con i servizi in background dell'ESP
 #ifdef ENABLE_DEBUG
 
   /* Scheduler per il monitoring della memoria heap */
   for (static uint32_t last1 = millis(); millis() - last1 > 5000; last1 = millis()) {
-    Serial.printf("[ POLLING] Free heap: %d bytes\n", ESP.getFreeHeap());
+    Serial.printf("[ SYSTEM ] Free heap: %d bytes\n", ESP.getFreeHeap());
   }
 
   /* Scheduler per l'invio dei dati al server */
-  for (static uint32_t last2 = millis(); millis() - last2 > 6000; last2 = millis()) {
+  for (static uint32_t last2 = millis(); millis() - last2 > 60000; last2 = millis()) {
     Serial.printf("[  PUSH  ] Payload: %s\n", httpConnect().c_str());
   }
 

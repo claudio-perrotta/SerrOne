@@ -209,21 +209,17 @@
           <div class="w3-row-padding">
             <div class="w3-col s12 m6">
               <br>
-              <button type="button" class="w3-btn w3-padding-large w3-teal" style="width:100%" onclick="changeDeviceStatus('pin2', 'true')">Accendi luce</button>
+              <button type="button" class="w3-btn w3-padding-large w3-teal" style="width:100%" onclick="changeDeviceStatus('devID0', 'true')">Accendi luce</button>
             </div>
             <div class="w3-col s12 m6">
               <br>
-              <button type="button" class="w3-btn w3-padding-large w3-teal" style="width:100%" onclick="changeDeviceStatus('pin2', 'false')">Spegni luce</button>
+              <button type="button" class="w3-btn w3-padding-large w3-teal" style="width:100%" onclick="changeDeviceStatus('devID0', 'false')">Spegni luce</button>
             </div>
           </div>
           <div class="w3-row-padding">
-            <div class="w3-col s12 m6">
+            <div class="w3-col s12 m12">
               <br>
-              <button type="button" class="w3-btn w3-padding-large w3-teal" style="width:100%" onclick="requestJson('/pull.php')">Aggiorna da server</button>
-            </div>
-            <div class="w3-col s12 m6">
-              <br>
-              <button type="button" class="w3-btn w3-padding-large w3-teal" style="width:100%" onclick="requestJson('/sensors')">Aggiorna sensori</button>
+              <button type="button" class="w3-btn w3-padding-large w3-teal" style="width:100%" onclick="requestJson()">Aggiorna sensori</button>
             </div>
           </div>
           <br>
@@ -396,8 +392,8 @@
     xhr.send();
   }
 
-  // GET request JSON
-  function requestJson(file) {
+  // HTTP request JSON
+  function requestJson() {
     var xhr, myObj, txt = "";
     xhr = new XMLHttpRequest();
     xhr.onreadystatechange = function () {
@@ -415,7 +411,7 @@
               txt += "    <span class='databox round'><p>" + y + "</p></span>";
               txt += "  </label>";
               txt += "</div>";
-            } else if (y.startsWith("pin", 0)) {
+            } else if (y.startsWith("devID", 0)) {
               txt += "<div class='w3-col s12 m6 l4'>";
               txt += "  <label class='switch'>";
               txt += "    <p>" + x + "</p>";
@@ -439,24 +435,24 @@
         document.getElementById("sensors").innerHTML = txt;
       }
     };
-    xhr.open("GET", baseURL + file, true);
+    xhr.open("POST", baseURL + "/pull.php", true); // get BEFORE
     xhr.send();
   }
 
-  // GET update sensors on page load
-  requestJson("/sensors");
+  // POST update sensors on page load
+  requestJson();
 
   // POST change device state
-  function changeDeviceStatus(devId, state) {  
+  function changeDeviceStatus(devID, state) {
     var xhr = new XMLHttpRequest();
     xhr.open("POST", baseURL + "/device.php", true);
     xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
     xhr.onload = function () {
       console.log(this.responseText);
-      //document.getElementById(devId).checked = state; // aggiorna lo stato dell'interruttore
-      requestJson("/sensors"); // aggiorna lo stato dei dispositivi
+      //document.getElementById(devID).checked = state; // aggiorna lo stato dell'interruttore
+      requestJson(); // aggiorna lo stato dei dispositivi
       };
-    xhr.send("device=" + devId + "&ison=" + state);
+    xhr.send("devID=" + devID.replace("devID", "") + "&ison=" + state);
   }
 </script>
 

@@ -43,9 +43,13 @@ Debug is enabled by default on Serial. To disable, comment this line:
 
 ## Releases
 
+#### Version 0.14
++ added control over internet with rest & mqtt api
+- know bug with memory heap
+
 #### Version 0.13
 + added rest & mqtt api, for testing
-- know bug with PROGMEM macro (disabled some function)
+- know bug with PROGMEM macro (disabled some functions)
 
 #### Version 0.12
 + added hash to wi-fi config saved in eeprom
@@ -67,9 +71,9 @@ Debug is enabled by default on Serial. To disable, comment this line:
 - bug fixes and speed improvements
 
 #### Version 0.1: First working version
-+ LCD menu
-+ data read on sensors
-+ on/off actuators (only LED here)
++ LCD menu, with buttons navigations
++ data read on sensors (only DHT here)
++ on/off ~~actuators~~ (only LED here)
 
 Thanks to Ciro Natale for ispiring this project! 👏🏻
 

@@ -32,7 +32,7 @@ try {
     $sql = "CREATE TABLE IF NOT EXISTS `devices` (
         id INT(6) UNSIGNED AUTO_INCREMENT PRIMARY KEY,
         IP CHAR(45),
-        Token TEXT,
+        User TEXT,
         JSON_S TEXT,
         Time_Stamp TIMESTAMP
         )";
@@ -47,13 +47,14 @@ catch(PDOException $e) {
 
 try {
     // Now we prepare a query
-    $statement = $db->prepare("INSERT INTO `devices`(`IP`, `Token`, `JSON_S`, `Time_Stamp`) VALUES (:a, :b, :c, :d)");
+    $statement = $db->prepare("INSERT INTO `devices`(`IP`, `User`, `JSON_S`, `Time_Stamp`) VALUES (:a, :b, :c, :d)");
 
     // Queries from URL
     $queries = array();
     //echo "<pre>".print_r($_SERVER, TRUE)."</pre>\r\n";
     parse_str($_SERVER['QUERY_STRING'], $queries);
     $token = $queries['token'];
+    $user  = $queries['user'];
 
     // JSON from input
     $jsondata = file_get_contents("php://input");
@@ -69,11 +70,11 @@ try {
     // We can use $statement to insert data
     $statement->execute(array(
         ':a' => $ip,
-        ':b' => $token,
+        ':b' => $user,
         ':c' => $jsondata,
         ':d' => $timestamp
     ));
-    echo "<div>IP: {$ip} | Token: {$token} | Timestamp: {$timestamp}</div>\r\n";
+    echo "<div>IP: {$ip} | Token: {$token} | User: {$user} | Timestamp: {$timestamp}</div>\r\n";
 }
 catch(PDOException $e) {
     echo "<div>Error: " . $e->getMessage() . "</div>\r\n";

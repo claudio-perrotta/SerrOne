@@ -32,7 +32,7 @@ try {
     $sql = "CREATE TABLE IF NOT EXISTS `devices` (
         id INT(6) UNSIGNED AUTO_INCREMENT PRIMARY KEY,
         IP CHAR(45),
-        Token TEXT,
+        User TEXT,
         JSON_S TEXT,
         Time_Stamp TIMESTAMP
         )";

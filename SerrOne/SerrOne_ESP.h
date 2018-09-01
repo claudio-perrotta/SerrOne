@@ -150,10 +150,10 @@ String structToJson(S_Dispositivi *s) {
   json += IS + String(s->sensore[umidIdx].nome) + CS + "{\"" + String(s->sensore[umidIdx].simbolo) + CS + String(s->sensore[umidIdx].valore) + '}' + LS;
   json += IS + String(s->sensore[terrIdx].nome) + CS + "{\"" + String(s->sensore[terrIdx].simbolo) + CS + String(s->sensore[terrIdx].valore) + '}' + LS;
   json += IS + String(s->sensore[luceIdx].nome) + CS + "{\"" + String(s->sensore[luceIdx].simbolo) + CS + String(s->sensore[luceIdx].valore) + '}' + LS;
-  json += IS + String(s->attuatore[led_int].nome) + CS + "{\"pin" + String(s->attuatore[led_int].pin) + CS + String(s->attuatore[led_int].stato ? TRUE : FALSE) + '}' + LS;
-  json += IS + String(s->attuatore[lampada].nome) + CS + "{\"pin" + String(s->attuatore[lampada].pin) + CS + String(s->attuatore[lampada].stato ? TRUE : FALSE) + '}' + LS;
-  json += IS + String(s->attuatore[ventola].nome) + CS + "{\"pin" + String(s->attuatore[ventola].pin) + CS + String(s->attuatore[ventola].stato ? TRUE : FALSE) + '}' + LS;
-  json += IS + String(s->attuatore[v_acqua].nome) + CS + "{\"pin" + String(s->attuatore[v_acqua].pin) + CS + String(s->attuatore[v_acqua].stato ? TRUE : FALSE) + '}' + NL;
+  json += IS + String(s->attuatore[led_int].nome) + CS + "{\"devID" + String(led_int) + CS + String(s->attuatore[led_int].stato ? TRUE : FALSE) + '}' + LS;
+  json += IS + String(s->attuatore[lampada].nome) + CS + "{\"devID" + String(lampada) + CS + String(s->attuatore[lampada].stato ? TRUE : FALSE) + '}' + LS;
+  json += IS + String(s->attuatore[ventola].nome) + CS + "{\"devID" + String(ventola) + CS + String(s->attuatore[ventola].stato ? TRUE : FALSE) + '}' + LS;
+  json += IS + String(s->attuatore[v_acqua].nome) + CS + "{\"devID" + String(v_acqua) + CS + String(s->attuatore[v_acqua].stato ? TRUE : FALSE) + '}' + NL;
   json += '}';
 
   return json;
@@ -199,8 +199,9 @@ String httpConnect(void) {
 
     /* configure traged server and url */
     String clientUrl = "http://claudius.altervista.org/push.php";
-    clientUrl += "?token=" + *esp_id;
+    clientUrl += "?token=1234567890abcdef";
     clientUrl += "&user=admin";
+    //clientUrl += *esp_id;
     //http.begin("https://192.168.1.12/test.html", "7a 9c f4 db 40 d3 62 5a 6e 21 bc 5c cc 66 c8 3e a1 45 59 38"); //HTTPS
     http.begin(clientUrl); //HTTP
 
@@ -311,16 +312,21 @@ void webServerSetup() {
   });
 
   webServer.on("/device.php", []() {
-    if (webServer.hasArg("device") && webServer.hasArg("ison")) {
-      //uint8_t devId = indexOf(webServer.arg("device"));
-      bool stato = (webServer.arg("ison") == "true") ? true : false;
-      webServer.send(200, "text/plain", aziona(dispositivo.attuatore[led_int], stato) ? "Stato aggiornato" : "Gia` aggiornato");
+    if (webServer.hasArg("devID") && webServer.hasArg("ison")) {
+      uint8_t devID =  webServer.arg("devID").toInt();
+      bool    state = (webServer.arg("ison") == "true") ? true : false;
+      // Controlla se il puntatore e` valido
+      if (devID > v_acqua) {
+        webServer.send(500, "text/plain", "Disositivo non valido!");
+      } else {
+        webServer.send(200, "text/plain", aziona(dispositivo.attuatore[devID], state) ? "Stato aggiornato" : "Gia` aggiornato");
+      }
     } else {
       webServer.send(500, "text/plain", "Comando non valido!");
     }
   });
 
-  webServer.on("/sensors", []() {
+  webServer.on("/pull.php", []() { // sensors
     webServer.send(200, "application/json", structToJson(&dispositivo));
   });
 

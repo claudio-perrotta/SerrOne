@@ -135,7 +135,7 @@ IPAddress ap_IP(192, 168, 4, 1);
 String structToJson(S_Dispositivi *s) {
   char adesso_str[80];
   struct tm * timeinfo = localtime(&s->adesso);
-  strftime(adesso_str, 80, "%a %d/%m/%Y %T %z", timeinfo);
+  strftime(adesso_str, 80, "%a %T %z %d/%m/%Y", timeinfo);
 
   char *IS = "  \"", *CS = "\": ", *LS = ",\n", NL = '\n', *TRUE = "true", *FALSE = "false";
 

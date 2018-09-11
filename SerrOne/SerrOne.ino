@@ -63,32 +63,6 @@ int dst = 0;                      // Ora legale, in ore
 
 #endif //Platforms
 
-/* Routine per il polling */
-void polling(void) {
-  aggiornaSensori();
-  //controllaAutomatizzazione();
-#ifdef ESP8266
-  dnsServer.processNextRequest();
-  yield();
-  webServer.handleClient();
-  yield();
-  if (WiFi.status() == WL_CONNECTED) rest.handle(mqttClient); // Connect to the cloud
-  yield(); // Per la compatibilita` con i servizi in background dell'ESP
-#ifdef ENABLE_DEBUG
-
-  /* Scheduler per il monitoring della memoria heap */
-  for (static uint32_t last_1 = millis(); millis() - last_1 > 5000; last_1 = millis()) {
-    Serial.printf("[ SYSTEM ] Free heap: %d bytes\n", ESP.getFreeHeap());
-  }
-
-  /* Scheduler per l'invio dei dati al server */
-  for (static uint32_t last_2 = millis(); millis() - last_2 > 6000; last_2 = millis()) {
-    Serial.printf("[  PUSH  ] Payload: %s\n", httpConnect().c_str());
-  }
-
-#endif //ENABLE_DEBUG
-#endif //ESP8266
-}
 
 /* Imposta lo stato del PIN */
 void BalternaStatoPIN(int pin, bool& stato) {
@@ -199,7 +173,7 @@ SMenu<4> menu_comandi[] = {
 };
 
 /* Menu sistema */
-SMenu<2> menu_sistema[] = {
+SMenu<3> menu_sistema[] = {
   /* Titolo del menu */
   "     SISTEMA    ",
   /* Voci e relative funzioni del menu */
@@ -208,8 +182,12 @@ SMenu<2> menu_sistema[] = {
         ScreenSaver();
       }
     },
-    { "2. Versione FW  ", []() {
-        printScreen("", Version::toString(), false); delay(2000);
+    { "2. ID disp.     ", []() {
+        printScreen("ID dispositivo:", device_id); delay(2000);
+      }
+    },
+    { "3. Versione FW  ", []() {
+        printScreen("Versione FW:", Version::toString()); delay(2000);
       }
     }
   }
@@ -241,7 +219,7 @@ void setup() {
   /* Inizializza Serial Monitor */
   Serial.begin(SERIAL_BAUDRATE);
 #ifndef AVR
-  Serial.printf("\n[DEBUG] SerrOne - ver. %s\n[DEBUG] Compilation began %s at %s with C++%ld\n", Version::toString(), __DATE__, __TIME__, __cplusplus);
+  Serial.printf("\n[ DEBUG  ] SerrOne - ver. %s\n[ DEBUG  ] Compilation began %s at %s with C++%ld\n", Version::toString(), __DATE__, __TIME__, __cplusplus);
 #endif //ndef AVR
 #endif //ENABLE_DEBUG
   /* Tempo dell'avvio iniziale */
@@ -261,7 +239,7 @@ void setup() {
   configTime(timezone * 3600, dst * 3600, "pool.ntp.org", "time.nist.gov");
   if (WiFi.getMode() != WIFI_AP) {
     for (uint8_t i = 1; i <= 10; i++) {
-      printScreen("Config. ora...", String(i).c_str());
+      printScreen("Config. ora...", ("Tentativo " + String(i)).c_str());
       if (time(nullptr) > 38880) break;
       delay(1000);
     }
@@ -296,3 +274,38 @@ void loop() {
    There is also a yield() function which is equivalent to delay(0). The delayMicroseconds function, on the other
    hand, does not yield to other tasks, so using it for delays more than 20 milliseconds is not recommended.
 */
+
+/* Routine per il polling */
+void polling(void) {
+  aggiornaSensori();
+  controllaAutomatizzazione();
+#ifdef ESP8266
+  dnsServer.processNextRequest();
+  yield();
+  webServer.handleClient();
+  yield();
+  if (WiFi.status() == WL_CONNECTED) rest.handle(mqttClient); // Connect to the cloud
+  yield(); // Per la compatibilita` con i servizi in background dell'ESP
+#ifdef ENABLE_DEBUG
+
+  /* Scheduler per il monitoring della memoria heap */
+  for (static uint32_t last_1 = millis(); millis() - last_1 > 5 * 1000; last_1 = millis()) {
+    Serial.printf("[ SYSTEM ] Free heap: %d bytes\n", ESP.getFreeHeap());
+  }
+
+  /* Scheduler per l'invio dei dati al server */
+  for (static uint32_t last_2 = millis(); millis() - last_2 > 6 * 1000; last_2 = millis()) {
+    Serial.printf("[  PUSH  ] Payload: %s\n", httpConnect().c_str());
+  }
+
+  /* Scheduler per lo screen saver */
+  for (static uint32_t last_3 = millis(); millis() - last_3 > 12 * 1000; last_3 = millis()) {
+    Serial.printf("[ SYSTEM ] Screen Saver here\n");
+    //ScreenSaver();
+  }
+
+#endif //ENABLE_DEBUG
+#endif //ESP8266
+}
+
+/* End */

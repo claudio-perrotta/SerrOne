@@ -3,16 +3,14 @@
 
 // SVN
 
-namespace Version
-{
+namespace Version {
 const uint8_t   MAJOR     = 0;
 const uint8_t   MINOR     = 14;
-const uint16_t  REVISION  = 1002;
+const uint16_t  REVISION  = 1003;
 const char*     STAGE     = "pre-alpha";
 String version;
 
-inline const char* toString()
-{
+inline const char* toString() {
   version +=    String(MAJOR) + ".";
   version +=    String(MINOR) + ".";
   version += String(REVISION) + " ";

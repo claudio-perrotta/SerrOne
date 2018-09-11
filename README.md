@@ -45,11 +45,12 @@ Debug is enabled by default on Serial. To disable, comment this line:
 
 #### Version 0.14
 + added control over internet with rest & mqtt api
++ resolved bug with PROGMEM macro in "SerrOne_Resources.h"
 - know bug with memory heap
 
 #### Version 0.13
 + added rest & mqtt api, for testing
-- know bug with PROGMEM macro (disabled some functions)
+- know bug with PROGMEM macro ~~(disabled some functions)~~
 
 #### Version 0.12
 + added hash to wi-fi config saved in eeprom

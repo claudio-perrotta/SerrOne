@@ -43,99 +43,8 @@ DHT dht(DHT_PIN, DHT_TYPE);       // Inizializza dht
 int timezone = 2;                 // Fuso orario, in ore
 int dst = 0;                      // Ora legale, in ore
 
-/* Variabili globali disponibili ovunque nel programma */
-unsigned long       tempo_corrente;   // Current time
-unsigned long       tempo_iniziale;   // Definizione della variabile da inizializzare successivamente all'avvio
-const unsigned long periodo = 2500;   // Il valore e` il numero dei millisecondi minimo per l'aggiornamento
-
-/* Struttura dati per gli attuatori (Actuators) */
-struct S_Attuatore {
-  char      *nome;
-  uint8_t   pin;
-  bool      stato;
-};
-
-/* Struttura dati per i sensori (Sensors) */
-struct S_Sensore {
-  char      *nome;
-  uint8_t   valore;
-  char      *simbolo;
-};
-
-/* Struttura dati per i dispositivi */
-struct S_Dispositivi {
-  time_t adesso;                  // Data ed ora (tempo)
-  /* Definisce ed inizializza i sensori */
-  S_Sensore sensore[4] = {
-    {"Temperatura", 0, "C"},      // Temperature sensing
-    {"Umidita`", 0, "%"},         // Humidity sensing
-    {"Umidita` terra", 0, "%"},   // Soil moisture sensing
-    {"Luminosita`", 0, "cd"}      // Ambient light sensing
-  };
-  /* Definisce ed inizializza gli attuatori */
-  S_Attuatore attuatore[4] = {
-    {"LED integrato", LED_PIN, LOW},
-    {"Lampada", LIGHT_PIN, LOW},
-    {"Ventola", FAN_PIN, LOW},
-    {"Valvola acqua", WATER_VALVE, LOW}
-  };
-} dispositivo;
-
-enum sensorsIdx   {tempIdx = 0, umidIdx = 1, terrIdx = 2, luceIdx = 3};   // Indici sensori
-enum actuatorsIdx {led_int = 0, lampada = 1, ventola = 2, v_acqua = 3};   // Indici attuatori
-
-bool aggiornaSensori(void) {
-  /* Ottieni il "tempo" corrente (attualmente il numero di millisecondi dall'avvio del programma) */
-  tempo_corrente = millis();
-  /* Controlla quando il periodo e` superato - Test whether the period has elapsed */
-  if (tempo_corrente - tempo_iniziale >= periodo) {
-    dispositivo.adesso = time(nullptr);
-    dispositivo.sensore[tempIdx].valore = dht.readTemperature();
-    dispositivo.sensore[umidIdx].valore = dht.readHumidity();
-    dispositivo.sensore[terrIdx].valore = constrain(map(analogRead(SM_PIN), 0, 1023, 0, 100), 0, 100);
-    dispositivo.sensore[luceIdx].valore = 127;
-    /* IMPORTANT to save the start time of the current sensors state */
-    tempo_iniziale = tempo_corrente;
-    //jsonToFile(structToJson(&dispositivo));
-    return true;
-  } else return false;
-}
-
-/* Funzione condizionale per azionare gli attuatori */
-bool aziona(S_Attuatore &a, bool condizione = true) {
-  pinMode(a.pin, OUTPUT);
-  if (condizione) {
-    if (a.stato != HIGH) {
-      digitalWrite(a.pin, HIGH);
-      a.stato = HIGH;
-#ifdef ENABLE_DEBUG
-#ifndef AVR
-      Serial.printf("[ ACTION ] Dispositivo sul pin #%d (%s) stato: %s\n", a.pin, a.nome, a.stato ? "ON!" : "OFF");
-#endif //ndef AVR
-#endif //ENABLE_DEBUG
-      return true;
-    }
-  } else {
-    if (a.stato != LOW) {
-      digitalWrite(a.pin, LOW);
-      a.stato = LOW;
-#ifdef ENABLE_DEBUG
-#ifndef AVR
-      Serial.printf("[ ACTION ] Dispositivo sul pin #%d (%s) stato: %s\n", a.pin, a.nome, a.stato ? "ON!" : "OFF");
-#endif //ndef AVR
-#endif //ENABLE_DEBUG
-      return true;
-    }
-  }
-  return false; // Attuatore gia` aggiornato
-}
-
-/* Metodo per controllare gli attuatori */
-void controllaAutomatizzazione(void) {
-  aziona(dispositivo.attuatore[lampada],  dispositivo.sensore[umidIdx].valore < 55);
-  aziona(dispositivo.attuatore[ventola], (dispositivo.sensore[tempIdx].valore > 30) || (dispositivo.sensore[umidIdx].valore > 85) );
-  aziona(dispositivo.attuatore[v_acqua],  dispositivo.sensore[terrIdx].valore < 40);
-}
+/* Inclusione delle librerie fondamentali */
+#include "SerrOne_Core.h"
 
 /* Inclusione librerie per il menu e lo schermo */
 #include "SerrOne_Screen.h"
@@ -145,7 +54,7 @@ void controllaAutomatizzazione(void) {
 //#include <Arduino.h> // <- placeholder
 
 #elif defined(ESP8266) || defined(ESP32)
-#include "SerrOne_ESP.h"
+#include "SerrOne_Connectivity.h"
 #include "SerrOne_RestOverMQTT.h"
 
 #else
@@ -167,12 +76,12 @@ void polling(void) {
 #ifdef ENABLE_DEBUG
 
   /* Scheduler per il monitoring della memoria heap */
-  for (static uint32_t last1 = millis(); millis() - last1 > 5000; last1 = millis()) {
+  for (static uint32_t last_1 = millis(); millis() - last_1 > 5000; last_1 = millis()) {
     Serial.printf("[ SYSTEM ] Free heap: %d bytes\n", ESP.getFreeHeap());
   }
 
   /* Scheduler per l'invio dei dati al server */
-  for (static uint32_t last2 = millis(); millis() - last2 > 60000; last2 = millis()) {
+  for (static uint32_t last_2 = millis(); millis() - last_2 > 6000; last_2 = millis()) {
     Serial.printf("[  PUSH  ] Payload: %s\n", httpConnect().c_str());
   }
 
@@ -334,8 +243,8 @@ void setup() {
   Serial.printf("\n[DEBUG] SerrOne - ver. %s\n[DEBUG] Compilation began %s at %s with C++%ld\n", Version::toString(), __DATE__, __TIME__, __cplusplus);
 #endif //ndef AVR
 #endif //ENABLE_DEBUG
-  /* Initial start time */
-  tempo_iniziale = millis();
+  /* Tempo dell'avvio iniziale */
+  tempo_iniziale = millis(); // <- In rimozione
   /* Inizializza il pin digitale LED_BUILTIN come un output ed accendi il LED */
   aziona(dispositivo.attuatore[led_int], true); // Passa da LOW a HIGH
   /* Inizializza schermo */

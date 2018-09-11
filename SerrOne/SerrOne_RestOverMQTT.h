@@ -1,4 +1,4 @@
-/* SerrOne RestOverMQTT */
+/* SerrOne_RestOverMQTT.h */
 #pragma once
 
 /* Import required libraries */
@@ -61,4 +61,56 @@ void restSetup(void) {
   char* out_topic = rest.get_topic();
 }
 
+/* Custom */
+/*
+class REST : public aREST // redefinition of 'class aREST'
+{
+  public:
+
+    using aREST::aREST; // inherits 'class aREST'
+    //using aREST::client_id;
+    //using aREST::in_topic;
+    //using aREST::private_mqtt_server;
+
+    bool reconnect_(PubSubClient &client) {
+      Serial.print(F("Tentativo di connessione MQTT..."));
+
+      // Attempt to connect
+      if (client.connect(client_id.c_str())) {
+        if (private_mqtt_server) {
+          Serial.println(F("Connesso al server MQTT"));
+        }
+        else {
+          Serial.println(F("Connesso a aREST.io"));
+        }
+        client.subscribe(in_topic);
+
+      } else {
+        Serial.print(F("fallito, rc="));
+        Serial.print(client.state());
+        Serial.println(F(" riprova tra 5 secondi"));
+      }
+      return client.connected();
+    }
+
+    void handle_(PubSubClient &client) {
+      static long lastReconnectAttempt = 0;
+      if (!client.connected()) {
+        long now = millis();
+        // Wait 5 seconds before retrying
+        if (now - lastReconnectAttempt > 5000) {
+          lastReconnectAttempt = now;
+          // Attempt to reconnect
+          if (reconnect_(client)) {
+            lastReconnectAttempt = 0;
+          }
+        }
+      } else {
+        // Client connected
+        client.loop();
+      }
+    }
+
+};
+*/
 /* End */

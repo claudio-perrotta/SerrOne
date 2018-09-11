@@ -1,4 +1,4 @@
-/* SerrOne Resources */
+/* SerrOne_Resources.h */
 #pragma once
 
 /* Logo SerrOne */

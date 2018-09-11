@@ -1,4 +1,4 @@
-/* SerrOne Screen */
+/* SerrOne_Screen.h */
 #pragma once
 
 //#define USE_LCD 0   // 1 = usa LCD | 0 = usa OLED

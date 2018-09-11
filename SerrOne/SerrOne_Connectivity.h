@@ -45,12 +45,6 @@ char LOCAL_URL[13 + 1] = "serrone.local";
 #ifdef SERVERSECURE
 #include <ESP8266WebServerSecure.h>
 ESP8266WebServerSecure webServer(443);
-static const uint8_t rsakey[]  ICACHE_RODATA_ATTR = {
-#include "WebServerSecure_key.h"
-};
-static const uint8_t x509[] ICACHE_RODATA_ATTR = {
-#include "WebServerSecure_x509.h"
-};
 #else
 #include <ESP8266WebServer.h>
 ESP8266WebServer webServer(80);
@@ -288,7 +282,7 @@ void dnsServerSetup() {
 
 void webServerSetup() {
 #ifdef SECURESERVER
-  webServer.setServerKeyAndCert_P(rsakey, sizeof(rsakey), x509, sizeof(x509));
+  webServer.setServerKeyAndCert_P(Resources::rsakey, sizeof(Resources::rsakey), Resources::x509, sizeof(Resources::x509));
 #endif
   webServer.on("/login", []() {
     if (!webServer.authenticate(www_username, www_password))

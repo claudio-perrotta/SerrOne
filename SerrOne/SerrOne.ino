@@ -9,7 +9,7 @@
 
    This code is in the public domain.
 */
-//#include <Arduino.h>
+//#include <Arduino.h> // Include Arduino header
 #include "SerrOne_Version.h"
 
 /* Configurazione debug */
@@ -45,6 +45,7 @@ int dst = 0;                      // Ora legale, in ore
 
 /* Inclusione delle librerie fondamentali */
 #include "SerrOne_Core.h"
+#include "SerrOne_Resources.h"
 
 /* Inclusione librerie per il menu e lo schermo */
 #include "SerrOne_Screen.h"
@@ -160,7 +161,7 @@ void sensoreOhm(void) {
 
 /* Funzionalita` 5 */
 void ScreenSaver(void) {
-  //ssd1306_drawBitmap(0, 0, 128, 32, logo);
+  ssd1306_drawBitmap(0, 0, 128, 32, Resources::logo);
   do {
     /* Scheduler per l'inversione dei colori */
     for (static uint32_t last0 = millis(); millis() - last0 > 1000; last0 = millis()) {

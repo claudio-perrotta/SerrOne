@@ -18,7 +18,7 @@ LiquidCrystal_I2C lcd(LCD_ADDR, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
 //SCL -- GPIO5  -- D1
 //RST -- GPIO16 -- D0
 #define RST_OLED 16
-#include "SerrOne_Resources.h"
+
 #endif //USE_LCD
 
 /* Inverte i colori dello schermo */
@@ -75,7 +75,7 @@ void screenSetup() {
   delay(50);
   digitalWrite(RST_OLED, HIGH); // while OLED is running, must set D2 in high
   ssd1306_128x32_i2c_init();
-  ssd1306_setFixedFont(ssd1306xled_font6x8);
+  ssd1306_setFixedFont(Resources::ssd1306xled_font8x16);
 #endif //USE_LCD
 }
 
@@ -89,7 +89,7 @@ void splashScreen() {
     delay(2000 / LCD_W);
   }
 #else
-  //ssd1306_drawBitmap(0, 0, 128, 32, logo);
+  ssd1306_drawBitmap(0, 0, 128, 32, Resources::logo);
   for (uint8_t i = 0; i < 16; i++) {
     ssd1306_printFixed (i * 8, 32, "_", STYLE_NORMAL);
     delay(2000 / 16);

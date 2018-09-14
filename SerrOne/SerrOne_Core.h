@@ -54,7 +54,6 @@ bool aggiornaSensori(void) {
     dispositivo.sensore[luceIdx].valore = 127;
     /* IMPORTANT to save the start time of the current sensors state */
     tempo_iniziale = tempo_corrente;
-    //jsonToFile(structToJson(&dispositivo));
     return true;
   } else return false;
 }
@@ -96,6 +95,6 @@ void controllaAutomatizzazione(void) {
 }
 
 /* Routine per il polling */
-void polling(void); // Only interface
+void polling(void); // Only header interface
 
 /* End */

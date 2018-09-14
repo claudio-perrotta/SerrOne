@@ -16,11 +16,34 @@
 #define ENABLE_DEBUG      true    // true = attiva debug | false = disattiva debug
 #define SERIAL_BAUDRATE   115200  // Velocita` porta seriale
 
+/*    Heltec WIFI_Kit_8's PINS
+  ------------------------------------------------------------------------------
+                  ___USB___
+              RST|#  |_|  #|PRG
+                 | _______ |
+      GND       -||       ||- GND
+      5V        -||       ||- 5V
+      3V        -||       ||- 3V
+      GND       -||       ||- GND
+      CS2   (0) ~||       ||- CTS
+      TXD1  (2) ~||       ||- DTR
+      CS   (15) -||       ||~ (5) SCL
+      MOSI (13) ~||       ||~ (1) CS1
+      MISO (12) ~||       ||~ (3) RXD0
+      CLK  (14) ~||       ||- RST
+      WAKE (16) -||       ||~ (4) SDA
+      ADC  (A0) -||_______||- RST
+                 |_________|
+
+      OLED connection: SDA to GPIO4/D2 | SCL to GPIO5/D1 | RST to GPIO16/D0
+  ------------------------------------------------------------------------------
+*/
+
 /* Configurazione PIN sensori ed attuatori */
 #define DHT_PIN     15            // Il pin digitale al quale e` connesso il DHT
 #define DHT_TYPE    DHT11         // Tipo di sensore DHT
 #define SM_PIN      A0            // PIN sensore umidita` suolo (Soil Moisture Sensor's PIN)
-#define LED_PIN     D3            // PIN del led `LED_BUILTIN`
+#define LED_PIN     D3            // PIN del led 'LED_BUILTIN'
 #define LIGHT_PIN   D8            // PIN della luce
 #define FAN_PIN     D7            // PIN della ventola
 #define WATER_VALVE D6            // PIN della valvola acqua
@@ -138,7 +161,7 @@ void ScreenSaver(void) {
   ssd1306_drawBitmap(0, 0, 128, 32, Resources::logo);
   do {
     /* Scheduler per l'inversione dei colori */
-    for (static uint32_t last0 = millis(); millis() - last0 > 1000; last0 = millis()) {
+    for (static uint32_t last_0 = millis(); millis() - last_0 >= 1000; last_0 = millis()) {
       invertMode();
     }
     polling();
@@ -182,12 +205,16 @@ SMenu<3> menu_sistema[] = {
         ScreenSaver();
       }
     },
-    { "2. ID disp.     ", []() {
-        printScreen("ID dispositivo:", device_id); delay(2000);
+    { "2. Info disp.   ", []() {
+        printScreen("ID dispositivo:", device_id);
+        for (uint32_t last_A = millis(); millis() - last_A <= 2500; polling()) {} // Wait
+        printScreen("SSID:", config.param.WFAP_SSID);
+        for (uint32_t last_A = millis(); millis() - last_A <= 2500; polling()) {} // Wait
       }
     },
     { "3. Versione FW  ", []() {
-        printScreen("Versione FW:", Version::toString()); delay(2000);
+        printScreen("Versione FW:", Version::toString());
+        for (uint32_t last_A = millis(); millis() - last_A <= 2500; polling()) {} // Wait
       }
     }
   }
@@ -200,7 +227,8 @@ SMenu<3> menu_principale[] = {
   /* Voci e relative funzioni del menu */
   {
     { "Premi il pul. A ", []() {
-        printScreen("", "Premuto pul. B! ", false); delay(2000);
+        printScreen("", "Premuto pul. B! ", false);
+        for (uint32_t last_A = millis(); millis() - last_A <= 2500; polling()) {} // Wait
       }
     },
     { "1. Comandi      ", []() {
@@ -217,10 +245,9 @@ SMenu<3> menu_principale[] = {
 void setup() {
 #ifdef ENABLE_DEBUG
   /* Inizializza Serial Monitor */
-  Serial.begin(SERIAL_BAUDRATE);
-#ifndef AVR
+  Serial.begin(SERIAL_BAUDRATE); // Inizializza porta seriale
+  while (!Serial); // Asetta che sia connessa
   Serial.printf("\n[ DEBUG  ] SerrOne - ver. %s\n[ DEBUG  ] Compilation began %s at %s with C++%ld\n", Version::toString(), __DATE__, __TIME__, __cplusplus);
-#endif //ndef AVR
 #endif //ENABLE_DEBUG
   /* Tempo dell'avvio iniziale */
   tempo_iniziale = millis(); // <- In rimozione
@@ -230,7 +257,7 @@ void setup() {
   screenSetup();
   /* Splash screen */
   splashScreen();
-#ifdef ESP8266
+#if defined(ESP8266) || defined(ESP32)
   /* Inizializza l'ogetto del File System (SPIFFS) */
   SPIFFS.begin();
   /* Configura il WiFi ed instanzia una connessione */
@@ -250,7 +277,7 @@ void setup() {
   webServerSetup();
   /* Configura REST API */
   restSetup();
-#endif //ESP8266
+#endif //ESPs
   /* Pulisci LCD e spegni il LED */
 #ifdef USE_LCD
   lcd.clear();
@@ -279,7 +306,7 @@ void loop() {
 void polling(void) {
   aggiornaSensori();
   controllaAutomatizzazione();
-#ifdef ESP8266
+#if defined(ESP8266) || defined(ESP32)
   dnsServer.processNextRequest();
   yield();
   webServer.handleClient();
@@ -289,23 +316,24 @@ void polling(void) {
 #ifdef ENABLE_DEBUG
 
   /* Scheduler per il monitoring della memoria heap */
-  for (static uint32_t last_1 = millis(); millis() - last_1 > 5 * 1000; last_1 = millis()) {
+  for (static uint32_t last_1 = millis(); millis() - last_1 >= 5 * 1000; last_1 = millis()) {
     Serial.printf("[ SYSTEM ] Free heap: %d bytes\n", ESP.getFreeHeap());
   }
 
   /* Scheduler per l'invio dei dati al server */
-  for (static uint32_t last_2 = millis(); millis() - last_2 > 6 * 1000; last_2 = millis()) {
+  for (static uint32_t last_2 = millis(); millis() - last_2 >= 6 * 1000; last_2 = millis()) {
+    //jsonToFile(structToJson(&dispositivo));
     Serial.printf("[  PUSH  ] Payload: %s\n", httpConnect().c_str());
   }
 
   /* Scheduler per lo screen saver */
-  for (static uint32_t last_3 = millis(); millis() - last_3 > 12 * 1000; last_3 = millis()) {
+  for (static uint32_t last_3 = millis(); millis() - last_3 >= 12 * 1000; last_3 = millis()) {
     Serial.printf("[ SYSTEM ] Screen Saver here\n");
     //ScreenSaver();
   }
 
 #endif //ENABLE_DEBUG
-#endif //ESP8266
+#endif //ESPs
 }
 
 /* End */

@@ -69,11 +69,11 @@ union config_u {
     WiFiMode_t  WIFI_MODE = WIFI_AP;  // Imposta: WIFI_AP | WIFI_STA | WIFI_AP_STA | WIFI_OFF
     uint8_t     hash[20];
   } param;
-  byte data[sizeof(config_s)];
+  byte data[sizeof(config_s)]; // Needed for raw acces to struct member
   config_u() {} // Due to the `struct` member, a constructor definition is now needed.
 } config, *config_p;
 
-char* esp_id = &config.param.WFAP_SSID[8]; // Da migliorare
+char* esp_id = &config.param.WFAP_SSID[8]; // Da migliorare!
 
 void defaultConfig() {
   strcpy(config.param.WFAP_SSID, (String("SerrOne_") + String(ESP.getChipId(), HEX)).c_str());
@@ -81,7 +81,6 @@ void defaultConfig() {
   strcpy(config.param.WIFI_SSID, "");
   strcpy(config.param.WIFI_PASS, "");
   config.param.WIFI_MODE = WIFI_AP; // Imposta: WIFI_AP | WIFI_STA | WIFI_AP_STA | WIFI_OFF
-  Serial.println(config.param.WFAP_SSID);
 }
 
 bool compare() {

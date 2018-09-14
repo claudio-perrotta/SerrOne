@@ -13,11 +13,12 @@ LiquidCrystal_I2C lcd(LCD_ADDR, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
 #else
 /* Include la libreria per l'OLED */
 #include "ssd1306.h"
-//WIFI_Kit_8's OLED connection:
-//SDA -- GPIO4  -- D2
-//SCL -- GPIO5  -- D1
-//RST -- GPIO16 -- D0
-#define RST_OLED 16
+#define RST_OLED    16            // Pin del reset dell'OLED
+#define OLED_C      16            // Larghezza OLED in caratteri (colonne)
+#define OLED_R      2             // Altezza OLED in caratteri (righe)
+
+//#include <U8g2lib.h>
+//U8G2_SSD1306_128X32_UNIVISION_F_HW_I2C u8g2(U8G2_R0, /* reset=*/ 16, /* clock=*/ 5, /* data=*/ 4); //U8g2 Contructor
 
 #endif //USE_LCD
 
@@ -47,18 +48,19 @@ void printScreen(const char *line0, const char *line1, bool need_clear = true) {
   lcd.print(line1);
 #else
   if (need_clear)
-    ssd1306_fillScreen(0x00);
+    ssd1306_clearScreen();
   ssd1306_printFixed (0,  0, line0, STYLE_BOLD);
   ssd1306_printFixed (0, 16, line1, STYLE_NORMAL);
 #endif //USE_LCD
 #ifdef ENABLE_DEBUG
-  if (need_clear)
-    Serial.write(12);   // FormFeed
-  Serial.println("\n[ SCREEN ]");
-  Serial.println("+----------------+");
-  Serial.print("|"); Serial.print(line0); Serial.println("|");
-  Serial.print("|"); Serial.print(line1); Serial.println("|");
-  Serial.println("+----------------+");
+  if (need_clear) {
+    Serial.write(12); // FormFeed
+    Serial.println(); // NewLine
+  }
+  Serial.print("[ SCREEN ] +----------------+\n");
+  Serial.print("[ SCREEN ] |"); Serial.print(line0); Serial.println("|");
+  Serial.print("[ SCREEN ] |"); Serial.print(line1); Serial.println("|");
+  Serial.print("[ SCREEN ] +----------------+\n");
 #endif //ENABLE_DEBUG
 }
 
@@ -90,10 +92,12 @@ void splashScreen() {
   }
 #else
   ssd1306_drawBitmap(0, 0, 128, 32, Resources::logo);
-  for (uint8_t i = 0; i < 16; i++) {
-    ssd1306_printFixed (i * 8, 32, "_", STYLE_NORMAL);
-    delay(2000 / 16);
+  ssd1306_negativeMode();
+  for (uint8_t i = 0; i < OLED_C; i++) {
+    ssd1306_drawHLine (i * 8, 30, i * 8 + 7);
+    delay(2000 / OLED_C);
   }
+  ssd1306_positiveMode();
 #endif //USE_LCD
 }
 
@@ -134,7 +138,7 @@ bool pressioneTasto(int pin) {
 #include <functional>
 typedef std::function<void(void)> THandlerFunction;
 #else
-typedef void (*THandlerFunction)(void); // = NULL; direttamente nella funzione?
+typedef void (*THandlerFunction)(void); // = NULL; direttamente nella funzione!?
 #endif
 
 /* Definizione della struttura dati per il menu */
@@ -156,7 +160,7 @@ uint8_t menu_item_id = 0;           // Inizializza variabile menu corrente
 /* Funzione per eseguire il menu */
 template <uint8_t N>
 void runMenu(SMenu<N> *menu) {
-  size_t size_vList = sizeof(menu->element);    // Size of list
+  size_t size_vList = sizeof(menu->element);    // Size of menu list
   size_t size_voice = sizeof(*menu->element);   // Size of 1 element
   const uint8_t menu_items = (size_vList / size_voice) - 1; // Calcolo del numero di voci del menu dalla lista, meno uno
   THandlerFunction _callback(NULL); // Handler per il callback

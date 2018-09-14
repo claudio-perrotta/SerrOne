@@ -63,8 +63,8 @@ void restSetup(void) {
 
 /* Custom */
 /*
-class REST : public aREST // redefinition of 'class aREST'
-{
+  class REST : public aREST // redefinition of 'class aREST'
+  {
   public:
 
     using aREST::aREST; // inherits 'class aREST'
@@ -111,6 +111,6 @@ class REST : public aREST // redefinition of 'class aREST'
       }
     }
 
-};
+  };
 */
 /* End */

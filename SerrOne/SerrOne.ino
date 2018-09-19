@@ -158,16 +158,23 @@ void sensoreOhm(void) {
 
 /* Funzionalita` 5 */
 void ScreenSaver(void) {
-  ssd1306_drawBitmap(0, 0, 128, 32, Resources::logo);
+  u8g2.firstPage();
+  u8g2.drawXBMP(0, 0, 128, 32, Resources::logo);
+  u8g2.nextPage();
+  //void U8G2::setContrast(uint8_t value)
   do {
     /* Scheduler per l'inversione dei colori */
     for (static uint32_t last_0 = millis(); millis() - last_0 >= 1000; last_0 = millis()) {
       invertMode();
+      u8g2.drawXBMP(0, 0, 128, 32, Resources::logo);
+      u8g2.nextPage();
+      u8g2.setPowerSave(true);
     }
     polling();
   } while (true != pressioneTasto(BUTTON_A));
   invertModeState = false;
   invertMode();
+  u8g2.setPowerSave(false);
 }
 
 /* Menu comandi */

@@ -12,13 +12,17 @@ uint8_t LCD_H       2             // Altezza LCD in caratteri
 LiquidCrystal_I2C lcd(LCD_ADDR, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
 #else
 /* Include la libreria per l'OLED */
-#include "ssd1306.h"
-#define RST_OLED    16            // Pin del reset dell'OLED
-#define OLED_C      16            // Larghezza OLED in caratteri (colonne)
-#define OLED_R      2             // Altezza OLED in caratteri (righe)
+#include <U8g2lib.h>
 
-//#include <U8g2lib.h>
-//U8G2_SSD1306_128X32_UNIVISION_F_HW_I2C u8g2(U8G2_R0, /* reset=*/ 16, /* clock=*/ 5, /* data=*/ 4); //U8g2 Contructor
+#ifdef U8X8_HAVE_HW_SPI
+#include <SPI.h>
+#endif
+#ifdef U8X8_HAVE_HW_I2C
+#include <Wire.h>
+#endif
+
+U8G2_SSD1306_128X32_UNIVISION_F_HW_I2C u8g2(U8G2_R0, /* reset=*/ 16, /* clock=*/ 5, /* data=*/ 4); // 'u8g2' Contructor
+//U8X8_SSD1306_128X32_UNIVISION_HW_I2C u8g2(/* reset=*/ 16, /* clock=*/ 5, /* data=*/ 4); // 'u8x8' Contructor
 
 #endif //USE_LCD
 
@@ -27,9 +31,11 @@ bool invertModeState = false;
 void invertMode() {
   invertModeState = !invertModeState;
   if (invertModeState) {
-    ssd1306_normalMode();
+    //ssd1306_normalMode();
+    u8g2.setDrawColor(1); // White
   } else {
-    ssd1306_invertMode();
+    //ssd1306_invertMode();
+    u8g2.setDrawColor(0); // Black
   }
 }
 
@@ -42,15 +48,21 @@ void printScreen(const char *line0, const char *line1, bool need_clear = true) {
 #ifdef USE_LCD
   if (need_clear)
     lcd.clear();
-  lcd.setCursor(0, 0);
-  lcd.print(line0);
-  lcd.setCursor(0, 1);
-  lcd.print(line1);
+  lcd.setCursor(0, 0); lcd.print(line0);
+  lcd.setCursor(0, 1); lcd.print(line1);
 #else
-  if (need_clear)
-    ssd1306_clearScreen();
-  ssd1306_printFixed (0,  0, line0, STYLE_BOLD);
-  ssd1306_printFixed (0, 16, line1, STYLE_NORMAL);
+  u8g2.firstPage();
+  if (need_clear) {
+    u8g2.clear();
+  }
+  do {
+    u8g2.setDrawColor(1); /* color 1 for the box */
+    u8g2.drawBox(0,  0, u8g2.getDisplayWidth(), u8g2.getAscent() + 2 );
+    u8g2.setDrawColor(0);
+    u8g2.drawStr(0,  0, line0);
+    u8g2.setDrawColor(1);
+    u8g2.drawStr(0, 16, line1);
+  } while ( u8g2.nextPage() );
 #endif //USE_LCD
 #ifdef ENABLE_DEBUG
   if (need_clear) {
@@ -72,12 +84,14 @@ void screenSetup() {
   lcd.cursor();
   lcd.blink();
 #else
-  pinMode(RST_OLED, OUTPUT);
-  digitalWrite(RST_OLED, LOW); // turn D2 low to reset OLED
-  delay(50);
-  digitalWrite(RST_OLED, HIGH); // while OLED is running, must set D2 in high
-  ssd1306_128x32_i2c_init();
-  ssd1306_setFixedFont(Resources::ssd1306xled_font8x16);
+  u8g2.begin();
+  u8g2.setFont(u8g2_font_pxplusibmvga8_tr); // u8g2_font_8x13_tr
+  u8g2.setFontRefHeightExtendedText();
+  u8g2.setFontPosTop();
+  //u8g2.setFontDirection(0);
+  u8g2.setFontMode(1); /* activate transparent font mode */
+  //u8g2.setDrawColor(2);
+  //u8g2.setAutoPageClear(false);
 #endif //USE_LCD
 }
 
@@ -91,13 +105,16 @@ void splashScreen() {
     delay(2000 / LCD_W);
   }
 #else
-  ssd1306_drawBitmap(0, 0, 128, 32, Resources::logo);
-  ssd1306_negativeMode();
-  for (uint8_t i = 0; i < OLED_C; i++) {
-    ssd1306_drawHLine (i * 8, 30, i * 8 + 7);
-    delay(2000 / OLED_C);
+  u8g2.firstPage();
+  u8g2.setBitmapMode(false /* solid */);
+  u8g2.drawXBMP(0, 0, 128, 32, Resources::logo);
+  u8g2.setDrawColor(0); // Black
+  for (uint8_t i = 0; i < 16; i++) {
+    u8g2.drawHLine(i * 8, 30, 8);
+    delay(2000 / 16);
+    u8g2.nextPage();
   }
-  ssd1306_positiveMode();
+  u8g2.setDrawColor(1); // White
 #endif //USE_LCD
 }
 

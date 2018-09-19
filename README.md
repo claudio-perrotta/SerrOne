@@ -43,6 +43,10 @@ Debug is enabled by default on Serial. To disable, comment this line:
 
 ## Releases
 
+#### Version 0.15
++ added u8g2 library as oled driver
+- removed previous oled library
+
 #### Version 0.14
 + added control over internet with rest & mqtt api
 + resolved bug with PROGMEM macro in "SerrOne_Resources.h"

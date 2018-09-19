@@ -160,9 +160,9 @@ uint8_t menu_item_id = 0;           // Inizializza variabile menu corrente
 /* Funzione per eseguire il menu */
 template <uint8_t N>
 void runMenu(SMenu<N> *menu) {
-  size_t size_vList = sizeof(menu->element);    // Size of menu list
-  size_t size_voice = sizeof(*menu->element);   // Size of 1 element
-  const uint8_t menu_items = (size_vList / size_voice) - 1; // Calcolo del numero di voci del menu dalla lista, meno uno
+  size_t size_mList = sizeof(menu->element);    // Size of menu list
+  size_t size_mItem = sizeof(*menu->element);   // Size of 1 element
+  const uint8_t menu_items = (size_mList / size_mItem) - 1; // Calcolo del numero di voci del menu dalla lista, meno uno
   THandlerFunction _callback(NULL); // Handler per il callback
   uint8_t prev_menu_item_id = 0;    // Dichiara ed inizializza la variabile
   bool    menu_back = false;        // Inizializza menu back
